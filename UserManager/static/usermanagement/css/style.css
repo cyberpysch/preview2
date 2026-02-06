@@ -1,0 +1,227 @@
+/* ===============================
+   GLOBAL RESET
+================================ */
+html, body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    background: #f0f2f5;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+/* ===============================
+   MAIN LAYOUT WRAPPER
+================================ */
+.page-wrapper {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    background: #f0f2f5;
+}
+
+/* ===============================
+   SIDEBAR
+================================ */
+#sidebar {
+    width: 250px;
+    min-width: 250px;
+    background-color: #212529;
+    color: #ffffff;
+    height: 100vh;
+    overflow-y: auto;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1040;
+    transition: transform 0.3s ease;
+    padding-top: 20px;
+}
+
+/* Sidebar links */
+#sidebar .nav-link {
+    color: #ced4da;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+}
+
+#sidebar .nav-link:hover,
+#sidebar .nav-link.active {
+    background-color: #343a40;
+    color: #ffffff;
+}
+
+/* Submenu indent */
+#sidebar .submenu .nav-link {
+    padding-left: 32px;
+}
+
+/* Sidebar footer (optional) */
+.sidebar-footer {
+    position: absolute;
+    bottom: 16px;
+    width: 100%;
+    text-align: center;
+    font-size: 0.8rem;
+    color: #adb5bd;
+}
+
+/* ===============================
+   RIGHT SIDE (HEADER + CONTENT)
+================================ */
+.flex-grow-1 {
+    margin-left: 250px;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    height: 100vh;
+}
+
+/* ===============================
+   HEADER (STICKY)
+================================ */
+.custom-header {
+    height: 56px;
+    background: #ffffff;
+    border-bottom: 1px solid #dee2e6;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    z-index: 1020;
+}
+
+/* ===============================
+   CONTENT AREA (ONLY SCROLL HERE)
+================================ */
+#content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: auto;
+    padding: 20px;
+    background: #f0f2f5;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* ===============================
+   TABLES & DROPDOWNS
+================================ */
+
+/* ===============================
+   TABLES & DROPDOWNS (FIXED)
+================================ */
+
+/* Remove the !important overflow fix - it causes more harm than good */
+.table-responsive {
+    /* Allow the table to scroll horizontally on mobile, 
+       but don't force 'visible' which breaks layout */
+    overflow-x: auto; 
+    position: relative;
+}
+
+/* Ensure the dropdown menu is forced to the front */
+.dropdown-menu {
+    position: absolute !important; /* Force absolute positioning */
+    z-index: 3000 !important;
+}
+
+/* Ensure the table cell doesn't clip the button */
+td .dropdown {
+    position: static !important; /* This allows the menu to position relative to the nearest positioned ancestor */
+}
+.dropdown {
+    position: relative;
+}
+
+
+/* Small dropdown trigger */
+.btn-sm {
+    line-height: 1.2;
+}
+
+/* ===============================
+   ROTATING ARROW (SIDEBAR)
+================================ */
+.rotate {
+    transition: transform 0.3s ease;
+}
+
+.rotate.down {
+    transform: rotate(90deg);
+}
+
+/* ===============================
+   MOBILE RESPONSIVE SIDEBAR
+================================ */
+@media (max-width: 768px) {
+
+    #sidebar {
+        transform: translateX(-100%);
+        position: fixed;
+    }
+
+    #sidebar.active {
+        transform: translateX(0);
+    }
+
+    .flex-grow-1 {
+        margin-left: 0;
+    }
+
+    /* Optional overlay when sidebar is open */
+    body.sidebar-open::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 1030;
+    }
+}
+
+/* ===============================
+   FORMS & INPUT POLISH
+================================ */
+input[readonly] {
+    background-color: #f8f9fa !important;
+    border: 1px solid #dee2e6 !important;
+    color: #495057;
+    font-weight: 500;
+}
+
+.form-label,
+label.small {
+    font-size: 0.75rem;
+    margin-bottom: 0.25rem;
+    color: #495057;
+}
+
+/* Validation styles */
+.border-danger {
+    border-color: #dc3545 !important;
+}
+
+.border-success {
+    border-color: #198754 !important;
+}
+
+/* ===============================
+   BUTTONS
+================================ */
+.btn-primary {
+    background-color: #0d6efd;
+    border: none;
+    font-weight: 600;
+}
+
+.btn-primary:hover {
+    background-color: #0b5ed7;
+}
+
+/* ===============================
+   UTILITIES
+================================ */
+.text-small {
+    font-size: 0.85rem;
+}
