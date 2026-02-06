@@ -1,436 +1,222 @@
 {% load static %}
 <!doctype html>
 <html lang="en">
-
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token }}">
-    <link rel="stylesheet" href="{% static 'usermanagement/css/style.css' %}">
+    <title>Management System</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <title>Dashboard</title>
+    <link rel="stylesheet" href="{% static 'usermanagement/css/style.css' %}">
 </head>
-
 <body>
-    <div class="page-wrapper" style="display: flex; min-height: 100vh;">
-        <div id="sidebar" class="d-flex flex-column bg-dark text-white" style="min-height:100vh; width:250px;">
-            <a href="{% url 'dashboard' %}"
-                class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none px-3 py-2">
-                <span class="fs-4 fw-bold">My Dashboard</span>
-            </a>
-            <hr class="text-secondary">
 
-            <ul class="nav nav-pills flex-column mb-auto" id="sidebarAccordion">
-                <li>
-                    <a href="#" id="defaultDashboardView" class="nav-link text-white px-3 py-2">Dashboard</a>
-                </li>
+<div class="page-wrapper">
+    <nav id="sidebar" class="bg-dark text-white shadow position-fixed h-100">
+        <div class="p-3"><h5 class="fw-bold text-info mb-0">PROINPLAY</h5></div>
+        <hr class="mt-0 opacity-25">
+        <ul class="nav nav-pills flex-column mb-auto px-2">
+            <li><a href="#" id="defaultDashboardView" class="nav-link text-white active mb-1">Dashboard</a></li>
+            <li>
+                <a href="#roleSubmenu" data-bs-toggle="collapse" class="nav-link text-white d-flex justify-content-between">
+                    <span>{{ role }}</span><span>▼</span>
+                </a>
+                <ul id="roleSubmenu" class="collapse list-unstyled ps-3 mt-1">
+                    {% for role_name in downline_roles %}
+                    <li><a href="#" class="nav-link text-white-50 role-link" data-role="{{ role_name }}">{{ role_name }}</a></li>
+                    {% endfor %}
+                </ul>
+            </li>
+        </ul>
+    </nav>
 
-                <li>
-                    <a href="#roleSubmenu"
-                        class="nav-link text-white d-flex justify-content-between align-items-center px-3 py-2"
-                        data-bs-toggle="collapse" aria-expanded="false">
-                        <span>{{ role }}</span>
-                        <span class="rotate">▶</span>
-                    </a>
-                    <ul id="roleSubmenu" class="collapse nav flex-column submenu">
-                        {% for role_name in downline_roles %}
-                        <li>
-                            <a href="#" class="nav-link text-white px-4 py-1 role-link" data-role="{{ role_name }}">
-                                {{ role_name }}
-                            </a>
-                        </li>
-                        {% empty %}
-                        <li><span class="nav-link text-white px-4 py-1">No downline roles</span></li>
-                        {% endfor %}
-                    </ul>
-                </li>
-            </ul>
+    <div class="flex-grow-1 d-flex flex-column">
+        <header class="custom-header d-flex align-items-center px-3 sticky-top">
+            <button class="btn btn-sm btn-outline-dark d-md-none me-2" id="sidebarToggle">☰</button>
+            <div class="flex-grow-1 d-flex justify-content-between align-items-center">
+                <span class="fw-bold">{{ request.user.username }} <span class="badge bg-info text-dark ms-2">{{ role }}</span></span>
+                <a href="/logout" class="btn btn-sm btn-danger">Logout</a>
+            </div>
+        </header>
+
+        <main id="content" class="p-4">
+          <div id="dashboardContent">
+    <div class="container-fluid px-0 mb-4">
+        <div class="row g-0 custom-stats-row mb-1">
+            <div class="col-6 col-md-3 stats-cell">
+                <div class="stats-label">MY USER NAME</div>
+                <div class="stats-value text-uppercase">{{ request.user.username }}({{ role }})</div>
+            </div>
+            <div class="col-6 col-md-3 stats-cell">
+                <div class="stats-label">MY LEVEL</div>
+                <div class="stats-value text-uppercase">{{ role }}</div>
+            </div>
+            <div class="col-6 col-md-3 stats-cell">
+                <div class="stats-label">BALANCE</div>
+                <div class="stats-value">{{ coins }}</div>
+            </div>
+            <div class="col-6 col-md-3 stats-cell">
+                <div class="stats-label">MEMBERS</div>
+                <div class="stats-value">{{ members_count }}</div>
+            </div>
         </div>
 
-        <div class="flex-grow-1">
-            <header class="custom-header p-2 bg-light border-bottom d-flex justify-content-between">
-                <div class="d-flex align-items-center">
-                    <button class="btn btn-outline-dark d-md-none me-2" id="sidebarToggle">
-                        ☰
-                    </button>
-                    <a href="/dashboard" class="logo">
-                        <img alt="proinplay" src="{% static 'usermanagement/assets/logo.png' %}" style="height:40px;" />
-                    </a>
-                    <span class="fw-bold">{{ request.user.username }}</span>
-            </header>
-
-            <div id="content" class="p-3">
-                <div id="dashboardContent" style="display:block;">
-                    <div class="container-fluid">
-                        <div class="row g-3 mb-4">
-                            <div class="col-6 col-md-3">
-                                <div class="p-3 bg-dark text-white rounded">
-                                    <small class="text-uppercase text-secondary">Username</small>
-                                    <div class="fw-bold">{{ request.user.username }}</div>
-                                </div>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <div class="p-3 bg-dark text-white rounded">
-                                    <small class="text-uppercase text-secondary">Balance</small>
-                                    <div class="fw-bold">{{ coins }}</div>
-                                </div>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <div class="p-3 bg-dark text-white rounded">
-                                    <small class="text-uppercase text-secondary">Members</small>
-                                    <div class="fw-bold">{{ members_count }}</div>
-                                </div>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <div class="p-3 bg-dark text-white rounded">
-                                    <small class="text-uppercase text-secondary">My Share</small>
-                                    <div class="fw-bold">{{ my_share|floatformat:2 }} %</div>
-                                </div>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <div class="p-3 bg-dark text-white rounded">
-                                    <small class="text-uppercase text-secondary">Match Comm</small>
-                                    <div class="fw-bold">{{ match_commission|floatformat:2 }} %</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="dynamicContent" style="display:none;"></div>
+        <div class="row g-0 custom-stats-row">
+            <div class="col-6 col-md-3 stats-cell">
+                <div class="stats-label">MY SHARE</div>
+                <div class="stats-value">{{ my_share }} %</div>
+            </div>
+            <div class="col-6 col-md-3 stats-cell">
+                <div class="stats-label">COMPANY SHARE</div>
+                <div class="stats-value">{{ company_share|default:"0" }} %</div>
+            </div>
+            <div class="col-6 col-md-3 stats-cell">
+                <div class="stats-label">MATCH COMMISSION</div>
+                <div class="stats-value">{{ match_commission }} %</div>
+            </div>
+            <div class="col-6 col-md-3 stats-cell">
+                <div class="stats-label">SESSION COMMISSION</div>
+                <div class="stats-value">{{ session_commission|default:"0" }} %</div>
             </div>
         </div>
     </div>
+</div>
+            <div id="dynamicContent" style="display:none;"></div>
+        </main>
+    </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<div class="modal fade" id="uplineModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white py-2">
+                <h6 class="modal-title">Select Upline Manager</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <label class="small fw-bold text-muted">Select Parent</label>
+                <select class="form-select mb-4" id="parentSelect"></select>
+                <button class="btn btn-primary w-100" onclick="proceedToRegistration()">Proceed to Registration</button>
+            </div>
+        </div>
+    </div>
+</div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-            /* ==============================
-               SIDEBAR MOBILE TOGGLE (NEW)
-            ============================== */
-            const sidebar = document.getElementById('sidebar');
-            const sidebarToggle = document.getElementById('sidebarToggle');
-
-            if (sidebarToggle) {
-                sidebarToggle.addEventListener('click', function (e) {
-                    e.stopPropagation();
-                    sidebar.classList.toggle('active');
-                });
-            }
-
-            // Close sidebar when clicking outside (mobile only)
-            document.addEventListener('click', function (e) {
-
-                // ✅ allow bootstrap dropdown clicks
-                if (e.target.closest('[data-bs-toggle="dropdown"]') || e.target.closest('.dropdown-menu')) {
-                    return;
-                }
-
-                if (
-                    window.innerWidth <= 768 &&
-                    sidebar &&
-                    sidebar.classList.contains('active') &&
-                    !sidebar.contains(e.target) &&
-                    (!sidebarToggle || !sidebarToggle.contains(e.target))
-                ) {
-                    sidebar.classList.remove('active');
-                }
-            });
-
-
-            /* ==============================
-               DASHBOARD / AJAX LOGIC (EXISTING)
-            ============================== */
-            const dashDiv = document.getElementById('dashboardContent');
-            const dynamicDiv = document.getElementById('dynamicContent');
-
-            // Handle Dashboard Link
-            document.getElementById('defaultDashboardView').addEventListener('click', function (e) {
-                e.preventDefault();
-                dashDiv.style.display = 'block';
-                dynamicDiv.style.display = 'none';
-
-                // Close sidebar on mobile after click
-                if (window.innerWidth <= 768) {
-                    sidebar.classList.remove('active');
-                }
-            });
-
-            // Handle Role Links (AJAX)
-            const roleLinks = document.querySelectorAll('.role-link');
-            roleLinks.forEach(link => {
-                link.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    const roleName = this.getAttribute('data-role');
-
-                    dashDiv.style.display = 'none';
-                    dynamicDiv.style.display = 'block';
-                    dynamicDiv.innerHTML = `
-                <div class="text-center mt-5">
-                    <div class="spinner-border text-primary"></div>
-                    <p>Loading...</p>
-                </div>
-            `;
-
-                    // Close sidebar on mobile after click
-                    if (window.innerWidth <= 768) {
-                        sidebar.classList.remove('active');
-                    }
-
-                    fetch(`/get-downline/${roleName.toLowerCase()}/`)
-                        .then(response => {
-                            if (!response.ok) throw new Error('Not found');
-                            return response.text();
-                        })
-                        .then(html => {
-                            dynamicDiv.innerHTML = html;
-
-                            // Re-init Bootstrap dropdowns
-                            const dropdownElementList = dynamicDiv.querySelectorAll('[data-bs-toggle="dropdown"]');
-                            dropdownElementList.forEach(el => {
-                                // Dispose old instance to be safe
-                                const old = bootstrap.Dropdown.getInstance(el);
-                                if (old) old.dispose();
-
-                                new bootstrap.Dropdown(el, {
-                                    container: 'body', // This moves the menu HTML to the end of <body>
-                                    boundary: 'viewport'
-                                });
-                            });
-                        })
-                        .catch(err => {
-                            dynamicDiv.innerHTML =
-                                `<div class="alert alert-danger">Could not load ${roleName} data.</div>`;
-                        });
-                });
-            });
-        });
-    </script>
-
-    <script>
-        const ROLE_LEVEL = {
-            Superadmin: 100,
-            Subadmin: 90,
-            Admin: 80,
-            Miniadmin: 70,
-            Master: 60,
-            Super: 50,
-            Agent: 40,
-            Client: 30,
-        };
-    </script>
-
-    <script>
-        // Add this to your main script block in dashboard.html
-        // Global variable to track the role being created
-        let currentTargetRole = '';
-
-        function handleCreateClick(role, myLevel, targetLevel) {
-            currentTargetRole = role;
-            const gap = myLevel - targetLevel;
-
-            // Immediate superior → current user
-            if (gap === 10) {
-                loadRegistrationForm(role, "{{ request.user.username }}");
-                return;
-            }
-
-            // Find immediate superior role (target + 10)
-            const requiredParentLevel = targetLevel + 10;
-            let parentRole = null;
-
-            for (const [r, level] of Object.entries(ROLE_LEVEL)) {
-                if (level === requiredParentLevel) {
-                    parentRole = r;
-                    break;
-                }
-            }
-
-            if (!parentRole) {
-                alert("Invalid hierarchy");
-                return;
-            }
-
-            // Fetch immediate superiors
-            fetch(`/get-uplines/${parentRole.toLowerCase()}/`)
-                .then(response => {
-                    if (!response.ok) throw new Error("Failed to load uplines");
-                    return response.json();
-                })
-                .then(users => {
-                    const select = document.getElementById("parentSelect");
-                    select.innerHTML = `<option disabled selected>Select Parent</option>`;
-
-                    if (users.length === 0) {
-                        const opt = document.createElement("option");
-                        opt.disabled = true;
-                        opt.textContent = "No uplines available";
-                        select.appendChild(opt);
-                    } else {
-                        users.forEach(user => {
-                            const option = document.createElement("option");
-                            option.value = user.username;
-                            option.textContent = user.username;
-                            select.appendChild(option);
-                        });
-                    }
-
-                    // Show modal AFTER dropdown is ready
-                    const modal = new bootstrap.Modal(
-                        document.getElementById('uplineModal')
-                    );
-                    modal.show();
-                })
-                .catch(err => {
-                    console.error(err);
-                    alert("Could not load upline users");
-                });
-        }
-
-
-        // Logic for the "Next" button inside your Upline Modal
-        function proceedToRegistration() {
-            const parent = document.getElementById('parentSelect').value;
-            if (parent && parent !== "Select Parent") {
-                // Hide the modal
-                const modal = bootstrap.Modal.getInstance(document.getElementById('uplineModal'));
-                modal.hide();
-
-                // Load the form into the dynamicContent div
-                loadRegistrationForm(currentTargetRole, parent);
-            } else {
-                alert("Please select a parent first.");
-            }
-        }
-
-        function loadRegistrationForm(role, parent) {
-            const dashDiv = document.getElementById('dashboardContent');
-            const dynamicDiv = document.getElementById('dynamicContent');
-
-            dashDiv.style.display = 'none';
-            dynamicDiv.style.display = 'block';
-            dynamicDiv.innerHTML = '<div class="text-center mt-5"><div class="spinner-border text-primary"></div><p>Loading Form...</p></div>';
-
-            // We fetch a partial HTML file
-            fetch(`/get-registration-form/?role=${role}&parent=${parent}`)
-                .then(response => {
-                    if (!response.ok) throw new Error('Form not found');
-                    return response.text();
-                })
-                .then(html => {
-                    dynamicDiv.innerHTML = html;
-                })
-                .catch(err => {
-                    dynamicDiv.innerHTML = `<div class="alert alert-danger">Error loading form: ${err.message}</div>`;
-                });
-        }
-
-
-    </script>
-
-
-
-    <script>
-        document.addEventListener("submit", function (e) {
-            const form = e.target;
-
-            // Only intercept OUR form
-            if (!form || form.id !== "newUserForm") return;
-
-            e.preventDefault();     // STOP native submit
-            e.stopPropagation();
-
-            console.log("Dynamic form submit intercepted");
-
-            const formData = new FormData(form);
-
-            const payload = {
-                username: formData.get("username"),
-                password: formData.get("password"),
-
-                role: currentTargetRole,          // from dashboard logic
-                parent_username: "{{ request.user.username }}",
-
-                coins: Number(formData.get("coins")) || 0,
-                share_type: formData.get("share_type"),
-
-                match_share: Number(formData.get("match_share")),
-                casino_share: Number(formData.get("casino_share")),
-
-                commission_type:
-                    formData.get("match_comm_type") === "bet_by_bet"
-                        ? "BET_BY_BET"
-                        : "NO_COMMISSION",
-
-                match_commission: Number(formData.get("match_commission")),
-                casino_commission: Number(formData.get("casino_commission")),
-                session_commission: Number(formData.get("session_commission"))
-            };
-
-            console.table(payload);
-
-            const csrfToken = document.querySelector(
-                'input[name="csrfmiddlewaretoken"]'
-            ).value;
-
-            fetch("/api/create-user/", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": csrfToken
-                },
-                body: JSON.stringify(payload)
-            })
-                .then(res => res.json().then(data => ({ ok: res.ok, data })))
-                .then(({ ok, data }) => {
-                    if (ok) {
-                        alert("User created successfully");
-                        location.reload();
-                    } else {
-                        console.error(data);
-                        alert(JSON.stringify(data, null, 2));
-                    }
-                })
-                .catch(err => {
-                    console.error(err);
-                    alert("Network error");
-                });
-        });
-    </script>
-    <script>
-        document.getElementById("newUserForm").addEventListener("submit", function (e) {
-            e.preventDefault();
-
-            const formData = new FormData(this);
-            const payload = {};
-
-            formData.forEach((value, key) => {
-                if (value !== "") {
-                    payload[key] = value;
-                }
-            });
-
-            fetch(`/accounts/edit/${formData.get("username")}/`, {
-                method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": document.querySelector(
-                        "input[name=csrfmiddlewaretoken]"
-                    ).value,
-                },
-                body: JSON.stringify(payload),
-            })
-                .then(res => res.json())
-                .then(() => {
-                    alert("Profile updated");
-                    location.reload();
-                });
-        });
-
-    </script>
-
+<script src="{% static 'usermanagement/js/dashboard.js' %}"></script>
 </body>
+<script>
+/**
+ * Main function to handle the Edit User flow
+ */
+function handleEditClick(username) {
+    const dynamicDiv = document.getElementById('dynamicContent');
+    const dashDiv = document.getElementById('dashboardContent');
 
+    // UI Feedback: Show loading state
+    dashDiv.style.display = 'none';
+    dynamicDiv.style.display = 'block';
+    dynamicDiv.innerHTML = `
+        <div class="text-center p-5">
+            <div class="spinner-border text-primary"></div>
+            <p>Loading Profile for ${username}...</p>
+        </div>`;
+
+    // 1. Fetch the Form HTML Template
+    fetch(`/get-edit-form/?username=${username}`)
+        .then(res => {
+            if (!res.ok) throw new Error("Failed to load form template");
+            return res.text();
+        })
+        .then(html => {
+            dynamicDiv.innerHTML = html;
+            
+            // 2. Fetch the Actual Account Data to fill the form
+            // URL matches: path('api/get-account-data/<str:username>/', ...)
+            return fetch(`/api/get-account-data/${username}/`);
+        })
+        .then(res => {
+            if (!res.ok) throw new Error(`Data fetch failed: ${res.status}`);
+            return res.json();
+        })
+        .then(data => {
+            const form = document.getElementById('editUserForm');
+            if (!form) return;
+
+            // 3. Populate Form Fields automatically
+            Object.keys(data).forEach(key => {
+                const input = form.querySelector(`[name="${key}"]`);
+                if (input) {
+                    if (input.type === 'checkbox') {
+                        input.checked = Boolean(data[key]);
+                    } else {
+                        input.value = data[key];
+                    }
+                }
+            });
+
+            // 4. Attach the Submit Event Listener
+            form.addEventListener('submit', function(e) {
+                e.preventDefault(); // Stop page refresh/GET request
+                
+                const formData = new FormData(form);
+                const jsonData = Object.fromEntries(formData.entries());
+
+                // Manually handle checkboxes (FormData skips unchecked boxes)
+                const checkBoxes = form.querySelectorAll('input[type="checkbox"]');
+                checkBoxes.forEach(cb => {
+                    jsonData[cb.name] = cb.checked;
+                });
+
+                // 5. Send POST to Save Data
+                // URL matches: path('api/accounts/edit/<str:username>/', ...)
+                fetch(`/api/accounts/edit/${username}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify(jsonData)
+                })
+                .then(res => res.json())
+                .then(result => {
+                    if (result.status === 'success') {
+                        alert("Successfully Updated!");
+                        // Optional: return to dashboard
+                        // location.reload(); 
+                    } else {
+                        alert("Error: " + result.message);
+                    }
+                })
+                .catch(err => {
+                    console.error("Save Error:", err);
+                    alert("Failed to save changes.");
+                });
+            });
+        })
+        .catch(err => {
+            console.error("Edit Flow Error:", err);
+            dynamicDiv.innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
+        });
+}
+
+/**
+ * Utility: Get CSRF Token for Django POST requests
+ */
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
 </html>

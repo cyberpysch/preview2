@@ -1,35 +1,36 @@
 <div class="card shadow-sm border-0">
-    <div class="card-header d-flex justify-content-between align-items-center bg-dark text-white py-2" style="font-size: 0.85rem; max-width: 1500px;">
+    <div class="card-header d-flex justify-content-between align-items-center bg-dark text-white py-2"
+        style="font-size: 0.85rem; max-width: 1500px;">
         <h6 class="mb-0 text-uppercase">{{ target_role }} Details</h6>
         <button class="btn btn-primary btn-sm px-3" onclick="location.reload()">Back</button>
     </div>
 
     <div class="p-3 bg-white">
         <div class="mb-3">
-    <button class="btn btn-primary btn-sm px-4" 
-            onclick="handleCreateClick('{{ target_role }}', {{ my_level|default:0 }}, {{ target_level|default:0 }})">
-        + Create
-    </button>
-</div>
+            <button class="btn btn-primary btn-sm px-4"
+                onclick="handleCreateClick('{{ target_role }}', {{ my_level|default:0 }}, {{ target_level|default:0 }})">
+                + Create
+            </button>
+        </div>
 
-<div class="modal fade" id="uplineModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-dark text-white py-2">
-                <h6 class="modal-title">Select Upline</h6>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4">
-                <select class="form-select" id="parentSelect">
-                    <option selected disabled>Select Parent</option>
-                </select>
-                <div class="text-center mt-3">
-                    <button class="btn btn-primary btn-sm px-5" onclick="proceedToRegistration()">Next</button>
+        <div class="modal fade" id="uplineModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-dark text-white py-2">
+                        <h6 class="modal-title">Select Upline</h6>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <select class="form-select" id="parentSelect">
+                            <option selected disabled>Select Parent</option>
+                        </select>
+                        <div class="text-center mt-3">
+                            <button class="btn btn-primary btn-sm px-5" onclick="proceedToRegistration()">Next</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
 
         <div class="table-responsive">
             <table class="table table-bordered table-sm text-center align-middle"
@@ -41,10 +42,10 @@
                         <th rowspan="2" class="align-middle">User</th>
                         <!--<th rowspan="2" class="align-middle">Name</th>-->
                         <th rowspan="2" class="align-middle">Upline Reporting</th>
-                       <!--  <th rowspan="2" class="align-middle">Password</th>-->
+                        <!--  <th rowspan="2" class="align-middle">Password</th>-->
                         <th rowspan="2" class="align-middle">Share</th>
                         <th colspan="3">Agent Comm %</th>
-                        
+
                     </tr>
                     <tr>
                         <th>Match</th>
@@ -66,7 +67,7 @@
                                 <ul class="dropdown-menu shadow">
                                     <li><a class="dropdown-item"
                                             href="/accounts/deposit/{{ acc.user.username }}/">Deposit</a></li>
-                                            <li><a class="dropdown-item"
+                                    <li><a class="dropdown-item"
                                             href="/accounts/deposit/{{ acc.user.username }}/">Withdraw</a></li>
                                     <li><a class="dropdown-item"
                                             href="/accounts/exposure/{{ acc.user.username }}/">Exposure Limit</a></li>
@@ -79,7 +80,12 @@
                                     <li>
                                         <hr class="dropdown-divider">
                                     </li>
-                                    <li><a class="dropdown-item" href="/accounts/edit/{{ acc.user.username }}/">Edit</a>
+                                    <li>
+                                        <a class="dropdown-item" href="#"
+                                            onclick="handleEditClick('{{ acc.user.username }}', '{{ target_role }}')">
+                                            Edit
+                                        </a>
+                                    </li>
                                     </li>
                                     <li><a class="dropdown-item"
                                             href="/accounts/statement/{{ acc.user.username }}/">Statement</a></li>
@@ -108,7 +114,7 @@
                         <td>{{ acc.match_commission }}</td>
                         <td>{{ acc.session_commission }}</td>
                         <td>{{ acc.casino_commission }}</td>
-                      
+
                         <td class="fw-bold text-success">{{ acc.coins }}</td>
                     </tr>
                     {% empty %}

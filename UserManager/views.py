@@ -12,74 +12,103 @@ from rest_framework.renderers import TemplateHTMLRenderer
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.contrib.auth import get_user_model
-
-
+from django.http import JsonResponse, HttpResponseForbidden
 from django.views import View
+from django.shortcuts import get_object_or_404
+
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
-from django.contrib.auth.models import User
-from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 import json
 
+import json
+from django.http import JsonResponse
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from .models import Account, User
 
-@method_decorator(login_required, name="dispatch")
-class EditAccountView(View):
+@login_required
+def get_edit_profile_form(request):
+    """Returns the partial HTML for the edit form"""
+    username = request.GET.get('username')
+    target_acc = get_object_or_404(Account, user__username=username)
+    
+    # Send roles to the template so labels like "SUPER match share" are dynamic
+    context = {
+        'target_role': target_acc.role,
+        'parent_role': target_acc.parent.role if target_acc.parent else 'COMPANY',
+    }
+    return render(request, 'usermanagement/partials/editprofile.html', context)
 
-    def get(self, request, username):
-        user = get_object_or_404(User, username=username)
-        account = user.account
 
-        context = {
-            "mode": "edit",
-            "target_role": account.role,
-            "generated_username": user.username,
+def get_account_data(request, username):
+    account = get_object_or_404(Account, user__username=username)
+    parent = account.parent
 
-            # BASIC
-            "parent_coins": account.coins,
+    data = {
+        "username": account.user.username,
+        "is_active": "true" if account.user.is_active else "false",
+        "share_type": account.share_type,
 
-            # MATCH
-            "my_match_share": account.match_share,
-            "my_comm_type": account.match_comm_type,
-            "my_match_comm": account.match_commission,
-            "my_session_comm": account.session_commission,
+        # RIGHT COLUMN: Target User Data
+        "match_share": float(account.match_share),
+        "match_comm_type": "bet_by_bet" if account.commission_type == "BET_BY_BET" else "no_commission",
+        "match_commission": float(account.match_commission),
+        "session_commission": float(account.session_commission),
+        "casino_share": float(account.casino_share),
+        "casino_commission": float(account.casino_commission),
 
-            # CASINO
-            "my_casino_share": account.casino_share,
-            "my_casino_comm": account.casino_commission,
-        }
+        # LEFT COLUMN: Parent Data (Read-only)
+        "parent_match_share": float(parent.match_share) if parent else 0,
+        "parent_comm_type": parent.get_commission_type_display() if parent else "N/A",
+        "parent_match_comm": float(parent.match_commission) if parent else 0,
+        "parent_sess_comm": float(parent.session_commission) if parent else 0,
+        "parent_casino_share": float(parent.casino_share) if parent else 0,
+        "parent_casino_comm": float(parent.casino_commission) if parent else 0,
+    }
+    return JsonResponse(data)
 
-        return render(
-            request,
-            "usermanagement/partials/registration_form.html",
-            context
-        )
 
-    def patch(self, request, username):
-        user = get_object_or_404(User, username=username)
-        account = user.account
 
+# 3. Processes the update via POST/PATCH
+@login_required
+def api_edit_user(request, username):
+    if request.method not in ['POST', 'PATCH']:
+        return JsonResponse({"status": "error", "message": "Method not allowed"}, status=405)
+
+    try:
+        account = get_object_or_404(Account, user__username=username)
         data = json.loads(request.body)
+        
+        # --- Update User Table ---
+        user = account.user
+        if 'is_active' in data:
+            # Flexible boolean check (handles "true", true, 1)
+            user.is_active = str(data.get('is_active')).lower() in ['true', '1', 'yes']
+            user.save(update_fields=['is_active'])
 
-        # Partial updates only
-        for field in [
-            "coins",
-            "match_share",
-            "match_commission",
-            "session_commission",
-            "casino_share",
-            "casino_commission",
-        ]:
-            if field in data:
-                setattr(account, field, data[field])
+        # --- Update Account Table ---
+        # Basic fields
+        account.share_type = data.get('share_type', account.share_type)
+        account.match_share = data.get('match_share', account.match_share)
+        account.casino_share = data.get('casino_share', account.casino_share)
+        
+        # Commission logic
+        comm_val = data.get('match_comm_type')
+        if comm_val:
+            account.commission_type = "BET_BY_BET" if comm_val == "bet_by_bet" else "NO_COMMISSION"
+            
+        account.match_commission = data.get('match_commission', account.match_commission)
+        account.session_commission = data.get('session_commission', account.session_commission)
+        account.casino_commission = data.get('casino_commission', account.casino_commission)
+        
+        # Final save to SQLite
+        account.save()
+        
+        return JsonResponse({"status": "success", "message": f"Account for {username} updated"})
 
-        account.save(update_fields=data.keys())
-
-        return JsonResponse({
-            "success": True,
-            "message": "Profile updated successfully"
-        })
-
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=400)
 
 @login_required
 def get_upline_users(request, role):
