@@ -126,23 +126,31 @@ def get_upline_users(request, role):
     ]
     print(data)
     return JsonResponse(data, safe=False)
+def get_all_descendants(account):
+    descendants = []
+    children = Account.objects.filter(parent=account).select_related('user')
+    for child in children:
+        descendants.append(child)
+        descendants.extend(get_all_descendants(child))
+    return descendants
 @login_required
 def get_downline_data(request, role_name):
+    print(role_name)
     try:
         # 1. Get current user's account
         user_account = Account.objects.get(user=request.user)
         
         # 2. Match role case-insensitively (Subadmin vs subadmin)
         # Use __iexact to avoid capitalization issues
-        accounts = Account.objects.filter(
-            parent=user_account, 
-            role__iexact=role_name
-        ).select_related('user')
+        all_descendants = get_all_descendants(user_account)
+        accounts = [acc for acc in all_descendants if acc.role.lower() == role_name.lower()]
+
         for data in accounts:
             print(data.user.username , data.role,data.coins, data.match_share, data.match_commission,data.session_commission,data.casino_share,data.casino_commission)
         my_level = ROLE_LEVEL.get(user_account.role, 0)
         target_level = ROLE_LEVEL.get(role_name.capitalize(), 0)
         print(accounts)
+        print("My level:", my_level, "Target level:", target_level, accounts, role_name.capitalize())
         return render(request, "usermanagement/partials/agent_table.html", {
             "target_role": role_name.capitalize(),
             "accounts": accounts,
