@@ -276,6 +276,12 @@ class LoginAPIView(APIView):
 
 @login_required
 def get_registration_form(request):
+    current_user = request.user
+    current_user_role = current_user.role
+    try:
+        current_account = Account.objects.get(user=current_user)
+    except Account.DoesNotExist:
+        current_account = None
     role = request.GET.get("role", "").strip()
     parent_username = request.GET.get("parent", "").strip()
 
@@ -295,14 +301,14 @@ def get_registration_form(request):
         "generated_username": generated_username,
         "password": password,
         # Parent info (safe defaults)
-        "parent_role": parent_account.role if parent_account else "",
-        "parent_coins": parent_account.coins if parent_account else 0,
+        "parent_role": parent_account.role if parent_account else current_user_role,
+        "parent_coins": parent_account.coins if parent_account else  (current_account.coins if current_account else 0),
 
-        "my_match_share": parent_account.match_share if parent_account else 0,
-        "my_match_comm": parent_account.match_commission if parent_account else 0,
-        "my_casino_share": parent_account.casino_share if parent_account else 0,
-        "my_casino_comm": parent_account.casino_commission if parent_account else 0,
-        "my_session_comm": parent_account.session_commission if parent_account else 0,
+        "my_match_share": parent_account.match_share if parent_account else current_account.match_share if current_account else 0,
+        "my_match_comm": parent_account.match_commission if parent_account else current_account.match_commission if current_account else 0,
+        "my_casino_share": parent_account.casino_share if parent_account else current_account.casino_share if current_account else 0,
+        "my_casino_comm": parent_account.casino_commission if parent_account else current_account.casino_commission if current_account else 0,
+        "my_session_comm": parent_account.session_commission if parent_account else current_account.session_commission if current_account else 0,
         "my_comm_type": "Bet by bet",
     }
 
