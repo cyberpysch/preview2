@@ -1,7 +1,8 @@
 let currentTargetRole = '';
 let currentParentUsername = ''; // To track who the selected parent is
 const ROLE_LEVEL = { Superadmin: 100, Subadmin: 90, Admin: 80, Miniadmin: 70, Master: 60, Super: 50, Agent: 40, Client: 30 };
-
+const headerEl = document.querySelector('.custom-header .fw-bold');
+const LOGGED_IN_USERNAME = headerEl.dataset.username;
 // 1. GLOBAL HELPERS
 function initDropdowns(container) {
     container.querySelectorAll('[data-bs-toggle="dropdown"]').forEach(el => {
@@ -13,7 +14,7 @@ function handleCreateClick(role, myLevel, targetLevel) {
     currentTargetRole = role;
     const gap = myLevel - targetLevel;
     if (gap === 10) {
-        loadRegistrationForm(role, "{{ request.user.username }}");
+        loadRegistrationForm(role, LOGGED_IN_USERNAME);
         return;
     }
     const parentRole = Object.keys(ROLE_LEVEL).find(key => ROLE_LEVEL[key] === (targetLevel + 10));

@@ -277,6 +277,7 @@ class LoginAPIView(APIView):
 @login_required
 def get_registration_form(request):
     current_user = request.user
+    print("Current user:", current_user.username, "Role:", current_user.role)
     current_user_role = current_user.role
     try:
         current_account = Account.objects.get(user=current_user)
@@ -297,7 +298,7 @@ def get_registration_form(request):
     password = generate_alphanumeric_8()
     context = {
         "target_role": role or "User",
-        "parent_username": parent_username,
+        "parent_username": parent_username if parent_username else current_user.username,
         "generated_username": generated_username,
         "password": password,
         # Parent info (safe defaults)

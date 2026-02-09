@@ -19,7 +19,8 @@ class UserCreateSerializer(serializers.Serializer):
   "casino_share": 5.00,
   "commission_type": "BET_BY_BET",
   "match_commission": 2.00,
-  "session_commission": 1.00
+  "session_commission": 1.00,
+  "casino_commission": 2
 }
 
     '''
@@ -37,6 +38,7 @@ class UserCreateSerializer(serializers.Serializer):
     )
     match_commission = serializers.DecimalField(max_digits=5, decimal_places=2, default=0)
     session_commission = serializers.DecimalField(max_digits=5, decimal_places=2, default=0)
+    casino_commission = serializers.DecimalField(max_digits=5, decimal_places=2, default=0)
 
     def validate_parent_username(self, value):
         if value:
@@ -86,7 +88,8 @@ class UserCreateSerializer(serializers.Serializer):
             casino_share=validated_data.get("casino_share", 0),
             commission_type=validated_data.get("commission_type"),
             match_commission=validated_data.get("match_commission", 0),
-            session_commission=validated_data.get("session_commission", 0)
+            session_commission=validated_data.get("session_commission", 0),
+            casino_commission=validated_data.get("casino_commission", 0)
         )
 
         # transfer coins from parent to new account atomically
