@@ -18,6 +18,9 @@ urlpatterns = [
     path('api/get-account-data/<str:username>/', views.get_account_data, name='get_account_data'),
     path("api/deposit-coins/", views.deposit_coins, name="deposit_coins"),
     path("api/withdraw-coins/", views.withdraw_coins, name="withdraw_coins"),
+    path("api/account-statement/", views.account_statement, name="account_statement"),
+    path("accounts/statement-partial/", views.statement_partial, name="statement-partial"),
+
 
 
    

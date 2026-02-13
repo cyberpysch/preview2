@@ -324,4 +324,149 @@ function submitWithdraw() {
 }
 
 </script>
+<script>
+    let statementState = {
+    username: null,
+    currentPage: 1,
+    totalPages: 1,
+    startDate: null,
+    endDate: null
+};
+
+function handleStatementClick(username) {
+
+    statementState.username = username;
+    statementState.currentPage = 1;
+    statementState.startDate = null;
+    statementState.endDate = null;
+
+    const dashDiv = document.getElementById("dashboardContent");
+    const dynamicDiv = document.getElementById("dynamicContent");
+
+    dashDiv.style.display = "none";
+    dynamicDiv.style.display = "block";
+
+    fetch(`/accounts/statement-partial/`)
+        .then(res => res.text())
+        .then(html => {
+            dynamicDiv.innerHTML = html;
+            loadStatement();
+        });
+}
+
+function loadStatement() {
+
+    let url = `/api/account-statement/?username=${statementState.username}&page=${statementState.currentPage}`;
+
+    if (statementState.startDate && statementState.endDate) {
+        url += `&start_date=${statementState.startDate}&end_date=${statementState.endDate}`;
+    }
+
+    fetch(url)
+        .then(res => res.json())
+        .then(data => {
+
+            document.getElementById("totalRecords").innerText = data.total_records;
+
+            statementState.totalPages = data.total_pages;
+            document.getElementById("currentPageNumber").innerText = data.current_page;
+
+            renderStatementTable(data.results);
+            updatePaginationButtons();
+        });
+}
+
+function renderStatementTable(results) {
+
+    const tbody = document.getElementById("statementTableBody");
+    tbody.innerHTML = "";
+
+    results.forEach(tx => {
+
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+            <td>${tx.datetime}</td>
+            <td>${tx.description}</td>
+            <td class="text-end">${parseFloat(tx.prev_balance).toFixed(2)}</td>
+            <td class="text-end ${tx.cr > 0 ? 'text-success' : ''}">
+                ${parseFloat(tx.cr).toFixed(2)}
+            </td>
+            <td class="text-end ${tx.dr > 0 ? 'text-danger' : ''}">
+                ${parseFloat(tx.dr).toFixed(2)}
+            </td>
+            <td class="text-end text-success">
+                ${parseFloat(tx.comm_plus).toFixed(2)}
+            </td>
+            <td class="text-end text-danger">
+                ${parseFloat(tx.comm_minus).toFixed(2)}
+            </td>
+            <td class="text-end">${parseFloat(tx.current_balance).toFixed(2)}</td>
+        `;
+
+        tbody.appendChild(tr);
+    });
+}
+
+
+function changeStatementPage(direction) {
+
+    const newPage = statementState.currentPage + direction;
+
+    if (newPage < 1 || newPage > statementState.totalPages) return;
+
+    statementState.currentPage = newPage;
+    loadStatement();
+}
+
+function updatePaginationButtons() {
+
+    document.getElementById("prevPageBtn").disabled =
+        statementState.currentPage <= 1;
+
+    document.getElementById("nextPageBtn").disabled =
+        statementState.currentPage >= statementState.totalPages;
+}
+
+function applyStatementFilter() {
+
+    const start = document.getElementById("startDate").value;
+    const end = document.getElementById("endDate").value;
+
+    if (!start || !end) {
+        alert("Both dates are required");
+        return;
+    }
+
+    if (start > end) {
+        alert("Start date cannot be greater than end date");
+        return;
+    }
+
+    statementState.startDate = start;
+    statementState.endDate = end;
+    statementState.currentPage = 1;
+
+    loadStatement();
+}
+
+function resetStatementFilter() {
+
+    document.getElementById("startDate").value = "";
+    document.getElementById("endDate").value = "";
+
+    statementState.startDate = null;
+    statementState.endDate = null;
+    statementState.currentPage = 1;
+
+    loadStatement();
+}
+
+function closeStatement() {
+
+    document.getElementById("dynamicContent").style.display = "none";
+    document.getElementById("dashboardContent").style.display = "block";
+}
+
+</script>
 </html>

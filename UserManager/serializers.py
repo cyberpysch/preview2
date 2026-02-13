@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from UserManager.models import User, Account
+from UserManager.models import User, Account, CoinTransaction
 from UserManager.roles import ROLE_LEVEL, Role
 from django.db import transaction
 
@@ -107,6 +107,11 @@ class UserCreateSerializer(serializers.Serializer):
                 account.save()
 
                 # Optional: log both transactions in a Transaction table
+                CoinTransaction.objects.create(
+                sender=parent_account,
+                receiver=account,
+                amount=initial_coins
+            )
 
         return user
 

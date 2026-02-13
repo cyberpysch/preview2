@@ -165,8 +165,13 @@
                                         </a>
                                     </li>
                                     </li>
-                                    <li><a class="dropdown-item"
-                                            href="/accounts/statement/{{ acc.user.username }}/">Statement</a></li>
+                                    <li>
+                                        <a class="dropdown-item" href="javascript:void(0);"
+                                            onclick="handleStatementClick('{{ acc.user.username }}'); return false;">
+                                            Statement
+                                        </a>
+                                    </li>
+
                                     <li><a class="dropdown-item"
                                             href="/accounts/operations/{{ acc.user.username }}/">Account Operations</a>
                                     </li>

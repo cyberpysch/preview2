@@ -1,0 +1,148 @@
+<div id="statementContainer">
+
+    <!-- Header -->
+    <div class="statement-header">
+        <div class="statement-title">
+            List Of All Transactions ( <span id="totalRecords">0</span> )
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="closeStatement()">
+            Back
+        </button>
+    </div>
+
+    <!-- Filters -->
+    <div class="statement-filters">
+
+        <div class="date-filter-group">
+            <input type="date" id="startDate" class="form-control form-control-sm">
+            <span class="mx-2">~</span>
+            <input type="date" id="endDate" class="form-control form-control-sm">
+            <button class="btn btn-sm btn-dark ms-2" onclick="applyStatementFilter()">
+                Apply
+            </button>
+            <button class="btn btn-sm btn-secondary ms-1" onclick="resetStatementFilter()">
+                Reset
+            </button>
+        </div>
+
+        <div class="tab-buttons mt-2">
+            <button class="tab-btn active">All</button>
+            <button class="tab-btn">Account</button>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="statement-table-wrapper">
+        <table class="table statement-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th class="text-end">Prev. Bal</th>
+                    <th class="text-end">CR</th>
+                    <th class="text-end">DR</th>
+                    <th class="text-end">Comm+</th>
+                    <th class="text-end">Comm-</th>
+                    <th class="text-end">Balance</th>
+                </tr>
+            </thead>
+            <tbody id="statementTableBody">
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="statement-pagination">
+        <button id="prevPageBtn" class="page-btn" onclick="changeStatementPage(-1)">
+            &lt;
+        </button>
+        <span id="currentPageNumber" class="page-number">1</span>
+        <button id="nextPageBtn" class="page-btn" onclick="changeStatementPage(1)">
+            &gt;
+        </button>
+    </div>
+
+</div>
+
+<style>
+
+
+/* statement partial template css */
+.statement-header {
+    background-color: #0e2f2f;
+    color: #fff;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.statement-title {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.statement-filters {
+    padding: 15px 20px;
+    background-color: #f4f4f4;
+}
+
+.date-filter-group {
+    display: flex;
+    align-items: center;
+}
+
+.tab-buttons {
+    margin-top: 10px;
+}
+
+.tab-btn {
+    padding: 5px 15px;
+    border: 1px solid #ccc;
+    background: #fff;
+    cursor: pointer;
+    margin-right: 5px;
+}
+
+.tab-btn.active {
+    background-color: #1f6b8c;
+    color: #fff;
+}
+
+.statement-table-wrapper {
+    padding: 0 20px 10px 20px;
+}
+
+.statement-table thead {
+    background-color: #0e2f2f;
+    color: #fff;
+}
+
+.statement-table th,
+.statement-table td {
+    font-size: 13px;
+}
+
+.statement-pagination {
+    display: flex;
+    justify-content: flex-end;
+    padding: 10px 20px 20px 20px;
+}
+
+.page-btn {
+    border: 1px solid #ccc;
+    background: #fff;
+    padding: 3px 10px;
+    margin: 0 5px;
+    cursor: pointer;
+}
+
+.page-number {
+    border: 1px solid #1f6b8c;
+    padding: 3px 10px;
+    background: #fff;
+}
+.text-success { color: green !important; }
+.text-danger { color: red !important; }
+
+</style>

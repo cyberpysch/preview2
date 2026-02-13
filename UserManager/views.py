@@ -27,6 +27,7 @@ from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .models import Account, User , CoinTransaction
 from .viewsHelper.withdraw import *
+from .viewsHelper.statement import *
 
 User = get_user_model()
 
@@ -369,3 +370,6 @@ class UserStatusAPIView(APIView):
         serializer.update(user, serializer.validated_data)
         action = "activated" if user.is_active else "deactivated"
         return Response({"message": f"User {action} successfully"})
+
+def statement_partial(request):
+    return render(request, "usermanagement/partials/statement_partial.html")
