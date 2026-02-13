@@ -86,3 +86,23 @@ class Account(models.Model):
 
     def __str__(self):
         return f"{self.user.username} ({self.role})"
+    
+class CoinTransaction(models.Model):
+    sender = models.ForeignKey(
+        Account,
+        related_name="sent_transactions",
+        on_delete=models.PROTECT
+    )
+    receiver = models.ForeignKey(
+        Account,
+        related_name="received_transactions",
+        on_delete=models.PROTECT
+    )
+    amount = models.PositiveIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.sender} → {self.receiver} : {self.amount}"

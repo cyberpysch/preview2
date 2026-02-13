@@ -219,4 +219,109 @@ function getCookie(name) {
     return cookieValue;
 }
 </script>
+<script>
+
+function handleDepositClick(username) {
+
+    const modalElement = document.getElementById("depositModal");
+
+    if (!modalElement) {
+        console.error("depositModal not found");
+        return;
+    }
+
+    document.getElementById("depositUsername").value = username;
+    document.getElementById("depositAmount").value = "";
+
+    const depositModal = new bootstrap.Modal(modalElement);
+    depositModal.show();
+}
+
+function submitDeposit() {
+
+    const username = document.getElementById("depositUsername").value;
+    const amount = parseInt(document.getElementById("depositAmount").value);
+
+    if (!amount || amount <= 0) {
+        alert("Enter valid amount");
+        return;
+    }
+
+    fetch("/api/deposit-coins/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCSRFToken()
+        },
+        body: JSON.stringify({
+            username: username,
+            amount: amount
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert("Deposit successful");
+            location.reload();
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(() => alert("Server error"));
+}
+
+
+/* CSRF helper (safe for Django) */
+function getCSRFToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+
+</script>
+<script>
+    function handleWithdrawClick(username) {
+
+    const modalElement = document.getElementById("withdrawModal");
+
+    document.getElementById("withdrawUsername").value = username;
+    document.getElementById("withdrawAmount").value = "";
+
+    const modal = new bootstrap.Modal(modalElement);
+    modal.show();
+}
+
+
+function submitWithdraw() {
+
+    const username = document.getElementById("withdrawUsername").value;
+    const amount = parseInt(document.getElementById("withdrawAmount").value);
+
+    if (!amount || amount <= 0) {
+        alert("Enter valid amount");
+        return;
+    }
+
+    fetch("/api/withdraw-coins/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            username: username,
+            amount: amount
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert("Withdraw successful");
+            location.reload();
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(() => alert("Server error"));
+}
+
+</script>
 </html>

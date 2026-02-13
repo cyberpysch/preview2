@@ -16,6 +16,8 @@ urlpatterns = [
     path('get-edit-form/', views.get_edit_profile_form, name='get_edit_form'),
     path('api/accounts/edit/<str:username>/', views.api_edit_user, name='api_edit_user'),
     path('api/get-account-data/<str:username>/', views.get_account_data, name='get_account_data'),
+    path("api/deposit-coins/", views.deposit_coins, name="deposit_coins"),
+    path("api/withdraw-coins/", views.withdraw_coins, name="withdraw_coins"),
 
 
    

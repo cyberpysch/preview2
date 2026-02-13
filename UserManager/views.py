@@ -15,17 +15,30 @@ from django.contrib.auth import get_user_model
 from django.http import JsonResponse, HttpResponseForbidden
 from django.views import View
 from django.shortcuts import get_object_or_404
-
+from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 import json
-
+from .viewsHelper.deposit import *
 import json
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .models import Account, User
+from .models import Account, User , CoinTransaction
+from .viewsHelper.withdraw import *
+
+User = get_user_model()
+
+ROLE_PREFIX = {
+    'Subadmin': 'SUB',
+    'Admin': 'AD',
+    'Miniadmin': 'MADMIN',
+    'Master': 'MA',
+    'Super': 'SA',
+    'Agent': 'A',
+    'Client': 'C',
+}
 
 @login_required
 def get_edit_profile_form(request):
@@ -207,24 +220,6 @@ def dashboard_view(request):
     }
     print(context)
     return render(request, "usermanagement/dashboard.html", context)
-
-
-
-
-
-
-User = get_user_model()
-ROLE_PREFIX = {
-    'Subadmin': 'SUB',
-    'Admin': 'AD',
-    'Miniadmin': 'MADMIN',
-    'Master': 'MA',
-    'Super': 'SA',
-    'Agent': 'A',
-    'Client': 'C',
-}
-
-
 
 def generate_username(role):
     #role = request.GET.get("role")
