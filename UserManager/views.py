@@ -28,6 +28,8 @@ from django.contrib.auth.decorators import login_required
 from .models import Account, User , CoinTransaction
 from .viewsHelper.withdraw import *
 from .viewsHelper.statement import *
+from django.db.models import Max
+
 
 User = get_user_model()
 
@@ -100,11 +102,34 @@ def api_edit_user(request, username):
             # Flexible boolean check (handles "true", true, 1)
             user.is_active = str(data.get('is_active')).lower() in ['true', '1', 'yes']
             user.save(update_fields=['is_active'])
+        if 'match_share' in data:
+            new_match_share = float(data.get('match_share'))
+        
+            # Get child with highest match_share
+            violating_child = (
+                Account.objects
+                .filter(parent=account)
+                .order_by('-match_share')
+                .select_related('user')
+                .first()
+            )
+        
+            if violating_child and new_match_share < violating_child.match_share:
+                return JsonResponse({
+                    "status": "error",
+                    "message": (
+                        f"Cannot set match share to {new_match_share}. "
+                        f"Child user '{violating_child.user.username}' "
+                        f"has higher share ({violating_child.match_share})."
+                    )
+                }, status=400)
+        
+            account.match_share = new_match_share
 
         # --- Update Account Table ---
         # Basic fields
         account.share_type = data.get('share_type', account.share_type)
-        account.match_share = data.get('match_share', account.match_share)
+        #account.match_share = data.get('match_share', account.match_share)
         account.casino_share = data.get('casino_share', account.casino_share)
         
         # Commission logic
