@@ -94,14 +94,14 @@
         <!--End withdraw modal-->
         <div class="table-responsive">
             <div class="bg-dark border border-bottom-0 p-2">
-                <button class="btn btn-primary btn-sm me-2" onclick="showActiveUsers()">
-                    Users
+                <button type="button" class="btn btn-primary btn-sm me-2 filter-active" >
+                    Active
                 </button>
-                <button class="btn btn-danger btn-sm" onclick="showInactiveUsers()">
-                    Inactive Users
+                <button type="button" class="btn btn-danger btn-sm filter-inactive" >
+                    Inactive
                 </button>
             </div>
-            <table class="table table-bordered table-sm text-center align-middle"
+            <table id="usersTable" class="table table-bordered table-sm text-center align-middle"
                 style="font-size: 0.85rem; max-width: 1500px;">
                 <thead class="table-dark">
                     <tr>
@@ -124,7 +124,7 @@
                 </thead>
                 <tbody>
                     {% for acc in accounts %}
-                    <tr>
+                    <tr data-active="{{ acc.user.is_active|yesno:'true,false' }}">
                         <td>{{ forloop.counter }}</td>
                         <td>
                             <div class="dropdown">

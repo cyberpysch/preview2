@@ -76,7 +76,39 @@ document.addEventListener('DOMContentLoaded', () => {
             
             fetch(`/get-downline/${role.toLowerCase()}/`)
                 .then(res => res.text())
-                .then(html => { dynamic.innerHTML = html; initDropdowns(dynamic); });
+                .then(html => { dynamic.innerHTML = html; initDropdowns(dynamic); 
+                    const activeBtn = dynamic.querySelector('.filter-active');
+        const inactiveBtn = dynamic.querySelector('.filter-inactive');
+
+        // Select table rows
+        const rows = dynamic.querySelectorAll('#usersTable tbody tr');
+
+        if (!activeBtn || !inactiveBtn || rows.length === 0) {
+            console.error("Buttons or table rows not found!");
+            return;
+        }
+
+        // Filter functions (trim + lowercase to avoid Django template quirks)
+        const showActiveUsers = () => {
+            rows.forEach(row => {
+                row.style.display = row.dataset.active?.trim().toLowerCase() === 'true' ? '' : 'none';
+            });
+        };
+
+        const showInactiveUsers = () => {
+            rows.forEach(row => {
+                row.style.display = row.dataset.active?.trim().toLowerCase() === 'false' ? '' : 'none';
+            });
+        };
+
+        // Attach event listeners
+        activeBtn.addEventListener('click', showActiveUsers);
+        inactiveBtn.addEventListener('click', showInactiveUsers);
+
+        // Show active users by default
+        showActiveUsers();
+
+                });
         });
     });
 

@@ -91,6 +91,7 @@ def get_account_data(request, username):
 def api_edit_user(request, username):
     if request.method not in ['POST', 'PATCH']:
         return JsonResponse({"status": "error", "message": "Method not allowed"}, status=405)
+    SHARE_FIELDS = ['match_share','casino_share','match_commission','session_commission','casino_commission','coins']
 
     try:
         account = get_object_or_404(Account, user__username=username)
@@ -102,30 +103,44 @@ def api_edit_user(request, username):
             # Flexible boolean check (handles "true", true, 1)
             user.is_active = str(data.get('is_active')).lower() in ['true', '1', 'yes']
             user.save(update_fields=['is_active'])
-        if 'match_share' in data:
-            new_match_share = float(data.get('match_share'))
+        for field in ['match_share', 'casino_share']:
+            if field in data:
+                new_share = float(data.get(field))
+            
+                # Get child with highest match_share
+                violating_child = (
+                    Account.objects
+                    .filter(parent=account)
+                    .order_by(f'-{field}')
+                    .select_related('user')
+                    .first()
+                )
+            
+                if violating_child and new_share < getattr(violating_child, field):
+                    return JsonResponse({
+                        "status": "error",
+                        "message": (
+                            f"Cannot set {field} to {new_share}. "
+                            #f"Child user '{violating_child.user.username}' "
+                            f"Child user has higher share ({getattr(violating_child, field)})."
+                        )
+                    }, status=400)
+            
+                setattr(account, field, new_share)
+        parent = account.parent
+        for field in SHARE_FIELDS:
+            if field in data:
+                new_value = float(data.get(field))
+                if parent and new_value > getattr(parent, field):
+                    return JsonResponse({
+                        "status": "error",
+                        "message": (
+                            f"Cannot set {field.replace('_', ' ')} to {new_value}. "
+                            f"Parent user '{parent.user.username}' "
+                            f"has lower share ({getattr(parent, field)})."
+                        )
+                    }, status=400)
         
-            # Get child with highest match_share
-            violating_child = (
-                Account.objects
-                .filter(parent=account)
-                .order_by('-match_share')
-                .select_related('user')
-                .first()
-            )
-        
-            if violating_child and new_match_share < violating_child.match_share:
-                return JsonResponse({
-                    "status": "error",
-                    "message": (
-                        f"Cannot set match share to {new_match_share}. "
-                        f"Child user '{violating_child.user.username}' "
-                        f"has higher share ({violating_child.match_share})."
-                    )
-                }, status=400)
-        
-            account.match_share = new_match_share
-
         # --- Update Account Table ---
         # Basic fields
         account.share_type = data.get('share_type', account.share_type)
