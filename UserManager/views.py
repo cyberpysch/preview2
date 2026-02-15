@@ -29,7 +29,7 @@ from .models import Account, User , CoinTransaction
 from .viewsHelper.withdraw import *
 from .viewsHelper.statement import *
 from django.db.models import Max
-
+from .viewsHelper.logging import *
 
 User = get_user_model()
 

@@ -469,4 +469,24 @@ function closeStatement() {
 }
 
 </script>
+<script>
+$(document).on("click", ".account-operations-link", function(e) {
+    e.preventDefault();
+
+    var url = $(this).attr("href");
+
+    $.ajax({
+        url: url,
+        type: "GET",
+        success: function(response) {
+            $("#operations-container").html(response);
+        },
+        error: function(xhr) {
+            console.log("Error:", xhr.responseText);
+        }
+    });
+});
+
+</script>
+
 </html>

@@ -20,7 +20,11 @@ urlpatterns = [
     path("api/withdraw-coins/", views.withdraw_coins, name="withdraw_coins"),
     path("api/account-statement/", views.account_statement, name="account_statement"),
     path("accounts/statement-partial/", views.statement_partial, name="statement-partial"),
-
+    path(
+    "accounts/operations/<str:username>/",
+    views.account_operations,
+    name="account_operations",
+)
 
 
    

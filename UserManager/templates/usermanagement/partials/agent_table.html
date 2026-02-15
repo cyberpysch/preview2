@@ -173,7 +173,7 @@
                                     </li>
 
                                     <li><a class="dropdown-item"
-                                            href="/accounts/operations/{{ acc.user.username }}/">Account Operations</a>
+                                            href="{% url 'account_operations' acc.user.username %}">Account Operations</a>
                                     </li>
                                     <li><a class="dropdown-item"
                                             href="/accounts/login-report/{{ acc.user.username }}/">Login Report</a></li>

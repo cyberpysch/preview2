@@ -1,0 +1,191 @@
+
+
+<div class="operations-wrapper">
+
+    <!-- Header -->
+    <div class="operations-header">
+        <div class="title">
+            List Of All Transactions ({{ page_obj.paginator.count }})
+        </div>
+
+        <a href="javascript:history.back()" class="btn-back">
+            Back
+        </a>
+    </div>
+
+    <!-- Date Filter -->
+    <div class="filter-bar">
+        <input type="date" class="date-input">
+        <span class="separator">~</span>
+        <input type="date" class="date-input">
+    </div>
+
+    <!-- Table -->
+    <div class="table-container">
+        <table class="operations-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Operation</th>
+                    <th>Done By</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in page_obj %}
+                <tr>
+                    <td>
+                        {{ log.created_at|date:"d M h:i A" }}
+                    </td>
+                    <td>
+                        {{ log.model_name }} {{ log.field_name }} Change
+                    </td>
+                    <td>
+                        ({{ log.changed_by.id }}) {{ log.changed_by.username }}
+                    </td>
+                    <td>
+                        OLD {{ log.field_name }} {{ log.old_value }},
+                        NEW {{ log.field_name }} {{ log.new_value }}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="no-data">
+                        No operations found
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-wrapper">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}" class="page-btn">&lt;</a>
+        {% endif %}
+
+        <span class="page-number">
+            {{ page_obj.number }}
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="page-btn">&gt;</a>
+        {% endif %}
+    </div>
+
+</div>
+
+<style>
+
+/*logging template */
+.operations-wrapper {
+    background: #f5f5f5;
+    padding: 20px;
+    border: 1px solid #ddd;
+}
+
+/* Header */
+.operations-header {
+    background: #0c2b2e;
+    color: white;
+    padding: 12px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.operations-header .title {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.btn-back {
+    background: #1e88e5;
+    color: white;
+    padding: 6px 14px;
+    text-decoration: none;
+    font-size: 13px;
+    border-radius: 3px;
+}
+
+/* Filter */
+.filter-bar {
+    background: #ececec;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.date-input {
+    padding: 5px;
+    font-size: 13px;
+}
+
+.separator {
+    font-weight: bold;
+}
+
+/* Table */
+.table-container {
+    background: white;
+    border: 1px solid #ccc;
+}
+
+.operations-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.operations-table thead {
+    background: #0c2b2e;
+    color: white;
+}
+
+.operations-table th {
+    text-align: left;
+    padding: 10px;
+    border-right: 1px solid #1f4448;
+}
+
+.operations-table td {
+    padding: 8px 10px;
+    border-top: 1px solid #ddd;
+    border-right: 1px solid #eee;
+    background: #f9f9f9;
+}
+
+.operations-table tr:hover td {
+    background: #e6f0f2;
+}
+
+.no-data {
+    text-align: center;
+    padding: 15px;
+}
+
+/* Pagination */
+.pagination-wrapper {
+    text-align: right;
+    padding: 10px;
+    background: #f5f5f5;
+}
+
+.page-btn {
+    border: 1px solid #ccc;
+    padding: 4px 8px;
+    text-decoration: none;
+    color: #333;
+    margin: 0 3px;
+}
+
+.page-number {
+    border: 1px solid #1e88e5;
+    padding: 4px 10px;
+    color: #1e88e5;
+    font-weight: 600;
+}
+
+</style>
