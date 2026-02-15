@@ -106,3 +106,39 @@ class CoinTransaction(models.Model):
 
     def __str__(self):
         return f"{self.sender} → {self.receiver} : {self.amount}"
+
+class AuditLog(models.Model):
+    model_name = models.CharField(max_length=100)
+    object_id = models.CharField(max_length=100)
+
+    affected_account = models.ForeignKey(
+        Account,
+        on_delete=models.PROTECT,
+        related_name="audit_logs",
+        null=True,
+        blank=True
+    )
+
+    action = models.CharField(max_length=20)  # CREATE / UPDATE / DELETE
+
+    changed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="performed_actions"
+    )
+
+    field_name = models.CharField(max_length=100)
+    old_value = models.TextField(null=True, blank=True)
+    new_value = models.TextField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+    def save(self, *args, **kwargs):
+        if self.pk:
+            raise Exception("Audit logs cannot be modified.")
+        super().save(*args, **kwargs)
+    
+    def delete(self, *args, **kwargs):
+        raise Exception("Audit logs cannot be deleted.")

@@ -6,3 +6,6 @@ class UsermanagerConfig(AppConfig):
 
     def ready(self):
         import UserManager.signals
+
+def ready(self):
+    import UserManager.signals
