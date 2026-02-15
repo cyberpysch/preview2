@@ -488,5 +488,54 @@ $(document).on("click", ".account-operations-link", function(e) {
 });
 
 </script>
+<script>
+    document.addEventListener("click", function (e) {
 
+    const link = e.target.closest(".toggle-status");
+    if (!link) return;
+
+    e.preventDefault();
+
+    const username = link.dataset.username;
+    const currentState = link.dataset.active.trim().toLowerCase() === "true";
+    const newState = !currentState;
+
+    fetch("/api/update-user-status/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCSRFToken()
+        },
+        body: JSON.stringify({
+            username: username,
+            is_active: newState
+        })
+    })
+    .then(res => {
+        if (!res.ok) throw new Error("Request failed");
+        return res.json();
+    })
+    .then(data => {
+
+        alert(data.message);
+
+        // Update button text
+        link.textContent = newState ? "Deactivate" : "Activate";
+
+        // Update dataset
+        link.dataset.active = newState;
+
+        // Update row
+        const row = link.closest("tr");
+        row.dataset.active = newState;
+
+    })
+    .catch(error => {
+        console.error("Error:", error);
+    });
+
+});
+
+
+</script>
 </html>
