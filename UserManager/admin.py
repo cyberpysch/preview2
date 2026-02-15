@@ -15,9 +15,11 @@ class AccountAdmin(admin.ModelAdmin):
         "user", "role", "parent", "coins",
         "share_type", "match_share", "casino_share",
         "commission_type","match_commission",
-        "session_commission","casino_commission"
+        "session_commission","casino_commission",
+        "is_enabled_by_parent"
         )
     search_fields = ("user__username",)
+
 @admin.register(AuditLog)
 class AuditLogAdmin(admin.ModelAdmin):
     list_display = (

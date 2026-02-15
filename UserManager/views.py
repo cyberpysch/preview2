@@ -394,21 +394,37 @@ class UserCreateAPIView(APIView):
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+def update_descendants_status(account, enabled):
+    for child in account.children.select_related("user").all():
+        child.is_enabled_by_parent = enabled
+        child.save(update_fields=["is_enabled_by_parent"])
+        update_descendants_status(child, enabled)
 
 class UserStatusAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @transaction.atomic
     def post(self, request):
         serializer = UserStatusSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         try:
             user = User.objects.get(username=serializer.validated_data["username"])
+            account = user.account
         except User.DoesNotExist:
-            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "User not found"}, status=404)
 
-        serializer.update(user, serializer.validated_data)
-        action = "activated" if user.is_active else "deactivated"
+        new_status = serializer.validated_data["is_active"]
+
+        # Update personal status
+        user.is_active = new_status
+        user.save(update_fields=["is_active"])
+
+        # Update hierarchy effect
+        update_descendants_status(account, new_status)
+
+        action = "activated" if new_status else "deactivated"
+
         return Response({"message": f"User {action} successfully"})
 
 def statement_partial(request):

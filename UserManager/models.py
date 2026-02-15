@@ -71,6 +71,7 @@ class Account(models.Model):
     location = models.CharField(max_length=30, null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
+    is_enabled_by_parent = models.BooleanField(default=True)
 
     class Meta:
         constraints = [
@@ -87,6 +88,10 @@ class Account(models.Model):
     def __str__(self):
         return f"{self.user.username} ({self.role})"
     
+    @property
+    def is_effectively_active(self):
+        return self.user.is_active and self.is_enabled_by_parent
+
 class CoinTransaction(models.Model):
     sender = models.ForeignKey(
         Account,
