@@ -74,6 +74,8 @@ class UserCreateSerializer(serializers.Serializer):
             try:
                 parent_user = User.objects.get(username=parent_username)
                 parent_account = parent_user.account
+                if parent_account.match_share < validated_data.get("match_share") or parent_account.casino_share < validated_data.get("casino_share") or parent_account.match_commission< validated_data.get("match_commission")or parent_account.session_commission < validated_data.get("session_commission") or parent_account.casino_commission< validated_data.get("casino_commission"):
+                    raise serializers.ValidationError("Share or commission is more than parent")
             except User.DoesNotExist:
                 raise serializers.ValidationError("Parent user does not exist.")
 

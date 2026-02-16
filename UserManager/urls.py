@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from UserManager.views import LoginAPIView, UserCreateAPIView, UserStatusAPIView ,dashboard_view
+from UserManager.views import LoginAPIView, UserCreateAPIView, UserStatusAPIView ,dashboard_view, FullPartnershipDeedAPIView
 from .views import *
 urlpatterns = [
     #path('create-user/', views.create_user, name='create_user'),
@@ -24,8 +24,8 @@ urlpatterns = [
     "accounts/operations/<str:username>/",
     views.account_operations,
     name="account_operations",
-)
-
+),
+    path("api/deed/<str:username>/", FullPartnershipDeedAPIView.as_view(), name="deed"),
 
    
 

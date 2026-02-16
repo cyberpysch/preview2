@@ -125,7 +125,13 @@
                 <tbody>
                     {% for acc in accounts %}
                     <tr data-active="{{ acc.user.is_active|yesno:'true,false' }}">
-                        <td>{{ forloop.counter }}</td>
+                        <td>
+    <button class="btn btn-warning btn-sm py-0 px-2 partnership-btn"
+        data-username="{{ acc.user.username }}">
+        Partnership
+    </button>
+</td>
+
                         <td>
                             <div class="dropdown">
                                 <button class="btn btn-info btn-sm py-0 px-2" type="button" data-bs-toggle="dropdown"
@@ -221,6 +227,32 @@
                     {% endfor %}
                 </tbody>
             </table>
+            <!-- Partnership Modal -->
+<div class="modal fade" id="partnershipModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title">
+            Partnership Info - <span id="deedUsername"></span>
+        </h5>
+        <button type="button" class="btn-close btn-close-white"
+            data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body" id="deedContent">
+        <!-- Dynamic content -->
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm"
+            data-bs-dismiss="modal">Close</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
         </div>
     </div>
 </div>

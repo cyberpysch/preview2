@@ -538,4 +538,65 @@ $(document).on("click", ".account-operations-link", function(e) {
 
 
 </script>
+<script>
+document.addEventListener("click", function (e) {
+
+    const button = e.target.closest(".partnership-btn");
+    if (!button) return;
+
+    const username = button.dataset.username;
+
+    fetch(`/api/deed/${username}/`)
+        .then(res => res.json())
+        .then(data => {
+
+            document.getElementById("deedUsername").innerText = username;
+
+            let html = "";
+
+            function buildSection(title, field) {
+
+                html += `<h6 class="mt-3">${title}</h6>`;
+
+                html += `
+                <div class="table-responsive">
+                <table class="table table-bordered table-sm text-center">
+                    <thead class="table-dark">
+                        <tr>
+                `;
+
+                data.forEach(level => {
+                    html += `<th>${level.role}</th>`;
+                });
+
+                html += `</tr></thead><tbody><tr>`;
+
+                data.forEach(level => {
+                    html += `<td>${level[field] ?? 0}</td>`;
+                });
+
+                html += `</tr></tbody></table></div>`;
+            }
+
+            buildSection("Match Share", "match_share");
+            buildSection("Casino Share", "casino_share");
+            buildSection("Match Commission", "match_commission");
+            buildSection("Session Commission", "session_commission");
+            buildSection("Casino Commission", "casino_commission");
+
+            document.getElementById("deedContent").innerHTML = html;
+
+            const modal = new bootstrap.Modal(
+                document.getElementById("partnershipModal")
+            );
+            modal.show();
+        })
+        .catch(error => {
+            console.error(error);
+            alert("Failed to load partnership data");
+        });
+
+});
+</script>
+
 </html>

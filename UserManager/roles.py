@@ -20,3 +20,11 @@ ROLE_LEVEL = {
     "Agent": 40,
     "Client": 30,
 }
+
+NUMERIC_FIELDS = [
+    "match_share",
+    "casino_share",
+    "match_commission",
+    "session_commission",
+    "casino_commission",
+]
