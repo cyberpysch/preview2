@@ -598,5 +598,31 @@ document.addEventListener("click", function (e) {
 
 });
 </script>
+ <!--to hide the commission fields using class commission in commission fields-->
+<script>
+function toggleCommissionFields() {
+    var commissionType = document.querySelector("select[name='match_comm_type']");
+    if (!commissionType) return;
+
+    var commissionFields = document.querySelectorAll(".commission");
+
+    commissionFields.forEach(function (el) {
+        var parentCol = el.closest(".col-md-6");
+
+        if (commissionType.value === "NO_COMMISSION") {
+            parentCol.style.display = "none";
+        } else {
+            parentCol.style.display = "";
+        }
+    });
+}
+
+// Run when dropdown changes
+document.addEventListener("change", function (e) {
+    if (e.target && e.target.name === "match_comm_type") {
+        toggleCommissionFields();
+    }
+});
+</script>
 
 </html>
