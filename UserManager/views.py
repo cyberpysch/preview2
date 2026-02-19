@@ -85,84 +85,139 @@ def get_account_data(request, username):
     return JsonResponse(data)
 
 
-
-# 3. Processes the update via POST/PATCH
 @login_required
 def api_edit_user(request, username):
     if request.method not in ['POST', 'PATCH']:
         return JsonResponse({"status": "error", "message": "Method not allowed"}, status=405)
+
     SHARE_FIELDS = ['match_share','casino_share','match_commission','session_commission','casino_commission','coins']
+
+    # Helper to safely parse floats
+    def safe_float(value):
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return 0
+
+    # Recursively checks if any descendant has BET_BY_BET
+    def any_descendant_has_bet_by_bet(account):
+        for child in account.children.all():
+            if child.commission_type == 'BET_BY_BET':
+                return True
+            if any_descendant_has_bet_by_bet(child):
+                return True
+        return False
+
+    # Recursively set NO_COMMISSION for all descendants
+    def cascade_no_commission(account):
+        for child in account.children.all():
+            if child.commission_type == 'BET_BY_BET':
+                child.commission_type = 'NO_COMMISSION'
+                child.match_commission = 0
+                child.session_commission = 0
+                child.casino_commission = 0
+                child.save()
+            cascade_no_commission(child)
 
     try:
         account = get_object_or_404(Account, user__username=username)
         data = json.loads(request.body)
-        
-        # --- Update User Table ---
         user = account.user
-        if 'is_active' in data:
-            # Flexible boolean check (handles "true", true, 1)
-            user.is_active = str(data.get('is_active')).lower() in ['true', '1', 'yes']
-            user.save(update_fields=['is_active'])
-        for field in ['match_share', 'casino_share']:
-            if field in data:
-                new_share = float(data.get(field))
-            
-                # Get child with highest match_share
-                violating_child = (
-                    Account.objects
-                    .filter(parent=account)
-                    .order_by(f'-{field}')
-                    .select_related('user')
-                    .first()
-                )
-            
-                if violating_child and new_share < getattr(violating_child, field):
-                    return JsonResponse({
-                        "status": "error",
-                        "message": (
-                            f"Cannot set {field} to {new_share}. "
-                            #f"Child user '{violating_child.user.username}' "
-                            f"Child user has higher share ({getattr(violating_child, field)})."
-                        )
-                    }, status=400)
-            
-                setattr(account, field, new_share)
         parent = account.parent
-        for field in SHARE_FIELDS:
-            if field in data:
-                new_value = float(data.get(field))
-                if parent and new_value > getattr(parent, field):
-                    return JsonResponse({
-                        "status": "error",
-                        "message": (
-                            f"Cannot set {field.replace('_', ' ')} to {new_value}. "
-                            f"Parent user '{parent.user.username}' "
-                            f"has lower share ({getattr(parent, field)})."
-                        )
-                    }, status=400)
-        
-        # --- Update Account Table ---
-        # Basic fields
-        account.share_type = data.get('share_type', account.share_type)
-        #account.match_share = data.get('match_share', account.match_share)
-        account.casino_share = data.get('casino_share', account.casino_share)
-        
-        # Commission logic
-        comm_val = data.get('match_comm_type')
-        if comm_val:
-            account.commission_type = "BET_BY_BET" if comm_val == "bet_by_bet" else "NO_COMMISSION"
-            
-        account.match_commission = data.get('match_commission', account.match_commission)
-        account.session_commission = data.get('session_commission', account.session_commission)
-        account.casino_commission = data.get('casino_commission', account.casino_commission)
-        
-        # Final save to SQLite
-        account.save()
-        
+
+        with transaction.atomic():
+            # --- Update is_active ---
+            if 'is_active' in data:
+                user.is_active = str(data.get('is_active')).lower() in ['true', '1', 'yes']
+                user.save(update_fields=['is_active'])
+
+            # --- Validate child share constraints ---
+            for field in ['match_share', 'casino_share']:
+                if field in data:
+                    new_share = safe_float(data.get(field))
+                    violating_child = account.children.order_by(f'-{field}').first()
+                    if violating_child and new_share < getattr(violating_child, field):
+                        return JsonResponse({
+                            "status": "error",
+                            "message": (
+                                f"Cannot set {field} to {new_share}. "
+                                f"Child user has higher value ({getattr(violating_child, field)})."
+                            )
+                        }, status=400)
+                    setattr(account, field, new_share)
+
+            # --- Validate parent share constraints ---
+            for field in SHARE_FIELDS:
+                if field in data:
+                    new_value = safe_float(data.get(field))
+                    if parent and new_value > getattr(parent, field):
+                        return JsonResponse({
+                            "status": "error",
+                            "message": (
+                                f"Cannot set {field.replace('_', ' ')} to {new_value}. "
+                                f"Parent user '{parent.user.username}' "
+                                f"has lower value ({getattr(parent, field)})."
+                            )
+                        }, status=400)
+
+            # --- Agent: propagate match_share / casino_share to clients ---
+            if account.role == "Agent":
+                update_fields = {}
+                if 'match_share' in data:
+                    update_fields['match_share'] = account.match_share
+                if 'casino_share' in data:
+                    update_fields['casino_share'] = account.casino_share
+                if update_fields:
+                    account.children.update(**update_fields)
+
+            # --- Update share_type ---
+            account.share_type = data.get('share_type', account.share_type)
+
+            # --- Commission Logic ---
+            old_commission = account.commission_type
+            comm_val = data.get('match_comm_type')
+            new_commission = old_commission
+            if comm_val:
+                new_commission = "BET_BY_BET" if comm_val == "bet_by_bet" else "NO_COMMISSION"
+
+            # --- Handle NO_COMMISSION downgrade ---
+            if new_commission == "NO_COMMISSION":
+                if account.role == "Agent":
+                    # Cascade to all clients
+                    cascade_no_commission(account)
+                else:
+                    # Upper levels → block if any descendant has BET_BY_BET
+                    if any_descendant_has_bet_by_bet(account):
+                        return JsonResponse({
+                            "status": "error",
+                            "message": (
+                                "Cannot set commission to NO_COMMISSION because one or more "
+                                "descendants have BET_BY_BET commission. "
+                                "Please update all descendants first."
+                            )
+                        }, status=400)
+
+            # Apply new commission
+            account.commission_type = new_commission
+
+            # Set commission fields
+            if account.commission_type == "NO_COMMISSION":
+                account.match_commission = 0
+                account.session_commission = 0
+                account.casino_commission = 0
+            else:
+                account.match_commission = safe_float(data.get('match_commission', account.match_commission))
+                account.session_commission = safe_float(data.get('session_commission', account.session_commission))
+                account.casino_commission = safe_float(data.get('casino_commission', account.casino_commission))
+
+            # --- Save account ---
+            account.save()
+
         return JsonResponse({"status": "success", "message": f"Account for {username} updated"})
 
     except Exception as e:
         return JsonResponse({"status": "error", "message": str(e)}, status=400)
+
 
 @login_required
 def get_upline_users(request, role):

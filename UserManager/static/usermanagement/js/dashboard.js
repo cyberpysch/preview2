@@ -44,7 +44,7 @@ function loadRegistrationForm(role, parent) {
     
     fetch(`/get-registration-form/?role=${role}&parent=${parent}`)
         .then(res => res.text())
-        .then(html => { dynamicDiv.innerHTML = html; initDropdowns(dynamicDiv); });
+        .then(html => { dynamicDiv.innerHTML = html; initDropdowns(dynamicDiv); toggleCommissionFields(); });
 }
 
 // 2. EVENT LISTENERS
