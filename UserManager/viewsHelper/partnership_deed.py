@@ -34,7 +34,7 @@ class FullPartnershipDeedAPIView(APIView):
         chain.reverse()  # Superadmin → Target
 
         if ROLE_LEVEL[logged_account.role] < 100:
-            max_role_level_to_show = ROLE_LEVEL[logged_account.role] + 10
+            max_role_level_to_show = ROLE_LEVEL[logged_account.role] #+ 10
         else:
             max_role_level_to_show = ROLE_LEVEL[logged_account.role]
 
@@ -55,9 +55,17 @@ class FullPartnershipDeedAPIView(APIView):
 
             for field in NUMERIC_FIELDS:
                 current_value = getattr(account, field) or 0
-
+                is_client_share_field = (
+                    target.role == "Client" and
+                    field in ["match_share", "casino_share"]
+                )
+                effective_length = len(filtered_chain)
+                if is_client_share_field:
+                    effective_length = len(filtered_chain) - 1
+                if is_client_share_field and i == len(filtered_chain) - 1:
+                    continue
                 # Last level keeps full value
-                if i == len(filtered_chain) - 1:
+                if i == effective_length - 1:
                     level_data[field] = float(current_value)
                 else:
                     child_value = getattr(filtered_chain[i + 1], field) or 0

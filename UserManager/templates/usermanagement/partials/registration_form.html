@@ -22,6 +22,10 @@
                     <label class="form-label small fw-bold">* Name</label>
                     <input type="text" name="name" class="form-control"  required>
                 </div>
+                <div class="col-md-6 offset-md-6">
+                    <label class="form-label small fw-bold">* Refrence</label>
+                    <input type="text" name="reference" class="form-control"  required>
+                </div>
                 <div class="col-md-6">
                     <label class="form-label small fw-bold">* Password</label>
                     <input type="text" name="password" class="form-control fw-bold" value="{{password}}" required>
@@ -74,7 +78,8 @@
                 <div class="col-md-6">
                     <label class="small fw-bold">* Commission Type</label>
                     <select name="match_comm_type" class="form-select" required>
-                        <option value="NO_COMMISSION" selected>No Commission</option>
+                        <option value="select_commission_type" selected>Select Commission Type</option>
+                        <option value="NO_COMMISSION">No Commission</option>
                         <option value="bet_by_bet">Bet by bet</option>
                     </select>
                 </div>

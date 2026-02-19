@@ -31,6 +31,7 @@ from .viewsHelper.statement import *
 from django.db.models import Max
 from .viewsHelper.logging import *
 from .viewsHelper.partnership_deed import *
+from .viewsHelper.status_api import *
 User = get_user_model()
 
 ROLE_PREFIX = {
@@ -135,16 +136,19 @@ def api_edit_user(request, username):
             for field in ['match_share', 'casino_share']:
                 if field in data:
                     new_share = safe_float(data.get(field))
-                    violating_child = account.children.order_by(f'-{field}').first()
-                    if violating_child and new_share < getattr(violating_child, field):
-                        return JsonResponse({
-                            "status": "error",
-                            "message": (
-                                f"Cannot set {field} to {new_share}. "
-                                f"Child user has higher value ({getattr(violating_child, field)})."
-                            )
-                        }, status=400)
-                    setattr(account, field, new_share)
+                    if account.role == "Agent":
+                        setattr(account, field, new_share)
+                    else:
+                        violating_child = account.children.order_by(f'-{field}').first()
+                        if violating_child and new_share < getattr(violating_child, field):
+                            return JsonResponse({
+                                "status": "error",
+                                "message": (
+                                    f"Cannot set {field} to {new_share}. "
+                                    f"Child user has higher value ({getattr(violating_child, field)})."
+                                )
+                            }, status=400)
+                        setattr(account, field, new_share)
 
             # --- Validate parent share constraints ---
             for field in SHARE_FIELDS:
@@ -184,7 +188,8 @@ def api_edit_user(request, username):
             if new_commission == "NO_COMMISSION":
                 if account.role == "Agent":
                     # Cascade to all clients
-                    cascade_no_commission(account)
+                    #cascade_no_commission(account)
+                    pass
                 else:
                     # Upper levels → block if any descendant has BET_BY_BET
                     if any_descendant_has_bet_by_bet(account):
@@ -448,44 +453,3 @@ class UserCreateAPIView(APIView):
                 "role": user.role
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-def update_descendants_status(account, enabled):
-    for child in account.children.select_related("user").all():
-        child.is_enabled_by_parent = enabled
-        child.save(update_fields=["is_enabled_by_parent"])
-        update_descendants_status(child, enabled)
-
-class UserStatusAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    @transaction.atomic
-    def post(self, request):
-        serializer = UserStatusSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        try:
-            user = User.objects.get(username=serializer.validated_data["username"])
-            account = user.account
-        except User.DoesNotExist:
-            return Response({"error": "User not found"}, status=404)
-
-        new_status = serializer.validated_data["is_active"]
-        if new_status:  # trying to activate
-            if account.parent and not account.parent.is_effectively_active:
-                return Response(
-                    {"error": "Cannot activate user while parent is inactive"},
-                    status=400
-                )
-        # Update personal status
-        user.is_active = new_status
-        user.save(update_fields=["is_active"])
-
-        # Update hierarchy effect
-        update_descendants_status(account, new_status)
-
-        action = "activated" if new_status else "deactivated"
-
-        return Response({"message": f"User {action} successfully"})
-
-def statement_partial(request):
-    return render(request, "usermanagement/partials/statement_partial.html")
