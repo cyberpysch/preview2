@@ -30,7 +30,7 @@ from .viewsHelper.withdraw import *
 from .viewsHelper.statement import *
 from django.db.models import Max
 from .viewsHelper.logging import *
-
+from .viewsHelper.partnership_deed import *
 User = get_user_model()
 
 ROLE_PREFIX = {
@@ -489,57 +489,3 @@ class UserStatusAPIView(APIView):
 
 def statement_partial(request):
     return render(request, "usermanagement/partials/statement_partial.html")
-
-from decimal import Decimal
-from .roles import NUMERIC_FIELDS
-class FullPartnershipDeedAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, username):
-        try:
-            target = Account.objects.select_related("parent", "user").get(
-                user__username=username
-            )
-        except Account.DoesNotExist:
-            return Response({"error": "User not found"}, status=404)
-
-        logged_account = request.user.account
-
-        # 🔐 Role hierarchy check
-        if ROLE_LEVEL[logged_account.role] < ROLE_LEVEL[target.role]:
-            return Response({"error": "Permission denied"}, status=403)
-
-        # 🔁 Build vertical chain
-        chain = []
-        current = target
-
-        while current:
-            chain.append(current)
-            current = current.parent
-
-        chain.reverse()  # Superadmin → Target
-
-        response_data = []
-
-        for i in range(len(chain)):
-            account = chain[i]
-
-            level_data = {
-                "username": account.user.username,
-                "role": account.role,
-            }
-
-            for field in NUMERIC_FIELDS:
-                current_value = getattr(account, field) or 0
-
-                # Last level keeps full value
-                if i == len(chain) - 1:
-                    level_data[field] = float(current_value)
-                else:
-                    child_value = getattr(chain[i + 1], field) or 0
-                    level_data[field] = float(current_value - child_value)
-
-            response_data.append(level_data)
-
-        return Response(response_data)
-
