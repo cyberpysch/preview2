@@ -108,9 +108,12 @@
                         <th rowspan="2" class="align-middle">#</th>
                         <th rowspan="2" class="align-middle">Action</th>
                         <th rowspan="2" class="align-middle">User</th>
-                        <!--<th rowspan="2" class="align-middle">Name</th>-->
+                        <th rowspan="2" class="align-middle">Name</th>
                         <th rowspan="2" class="align-middle">Upline Reporting</th>
-                        <!--  <th rowspan="2" class="align-middle">Password</th>-->
+                        <th rowspan="2" class="align-middle">D.O.J</th>
+                        {% if target_role == "Agent" %}
+                        <th rowspan="2" class="align-middle">Exposure</th>
+                        {% endif %}
                         <th rowspan="2" class="align-middle">Share</th>
                         <th colspan="3">Agent Comm %</th>
 
@@ -204,8 +207,13 @@
                         <td class="text-primary fw-bold">
                             <span style="cursor:pointer;">👁 {{ acc.user.username }}</span>
                         </td>
+                        <td>{{ acc.user.first_name|default:"-" }}</td>
                         <!--<td>{{ acc.user.first_name|default:"-" }}</td>-->
                         <td>{{ acc.parent.user.username|default:"System" }}</td>
+                        <td>{{ acc.created_at|date:"d M Y H:i" }}</td>
+                        {% if acc.role == "Agent" %}
+                        <td>{{ acc.exposure }}</td>
+                        {% endif %}
                         <!--<td>
                             ***** <a href="https://wa.me/{{ acc.user.phone_number }}" class="text-success ms-1">
                                 <i class="fab fa-whatsapp"></i>

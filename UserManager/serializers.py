@@ -27,6 +27,8 @@ class UserCreateSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=150)
     password = serializers.CharField(write_only=True)
     role = serializers.ChoiceField(choices=Role.choices)
+    name = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    reference = serializers.CharField(max_length=150, required=False, allow_blank=True)
     parent_username = serializers.CharField(
         max_length=150, required=False, allow_null=True
     )
@@ -64,6 +66,7 @@ class UserCreateSerializer(serializers.Serializer):
     def create(self, validated_data):
         username = validated_data["username"]
         password = validated_data["password"]
+        name = validated_data.get("name", "")
         role = validated_data["role"]
         initial_coins = validated_data.get("coins", 0)
 
@@ -80,7 +83,7 @@ class UserCreateSerializer(serializers.Serializer):
                 raise serializers.ValidationError("Parent user does not exist.")
 
         #  Create User and Account (coins = 0 initially)
-        user = User.objects.create_user(username=username, password=password, role=role)
+        user = User.objects.create_user(username=username, password=password, role=role, first_name=name)
         account = Account.objects.create(
             user=user,
             parent=parent_account,
@@ -91,7 +94,8 @@ class UserCreateSerializer(serializers.Serializer):
             commission_type=validated_data.get("commission_type"),
             match_commission=validated_data.get("match_commission", 0),
             session_commission=validated_data.get("session_commission", 0),
-            casino_commission=validated_data.get("casino_commission", 0)
+            casino_commission=validated_data.get("casino_commission", 0),
+            reference=validated_data.get("reference", "")
         )
 
         # transfer coins from parent to new account atomically

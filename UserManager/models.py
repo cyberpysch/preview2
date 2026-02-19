@@ -38,7 +38,7 @@ class Account(models.Model):
         choices=Role.choices,
         db_index=True
     )
-
+    reference = models.CharField(max_length=150, null=True, default="")
     # Money (NO FLOATS)
     coins = models.IntegerField(default=0)
 
