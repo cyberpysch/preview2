@@ -63,8 +63,10 @@
                 </div>
                 <div class="col-md-6">
                     <div class="row mb-2">
+                        {% if target_role|lower != "client" %}
                         <label class="col-sm-5 small text-danger">* {{ target_role }} Match Share(%)</label>
                         <div class="col-sm-7"><input type="number" step="0.01" name="match_share" class="form-control form-control-sm"></div>
+                        {% endif %}
                     </div>
                     <div class="row mb-2">
                         <label class="col-sm-5 small text-danger">* {{ target_role }} comm type</label>
