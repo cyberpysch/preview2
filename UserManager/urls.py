@@ -26,6 +26,10 @@ urlpatterns = [
     name="account_operations",
 ),
     path("api/deed/<str:username>/", FullPartnershipDeedAPIView.as_view(), name="deed"),
+    path('logout/', views.logout_view, name='logout'),
+    path('simple-password-reset/', 
+         SimplePasswordResetView.as_view(), 
+         name='simple_password_reset'),
 
    
 

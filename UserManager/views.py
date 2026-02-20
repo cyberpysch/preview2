@@ -32,6 +32,8 @@ from django.db.models import Max
 from .viewsHelper.logging import *
 from .viewsHelper.partnership_deed import *
 from .viewsHelper.status_api import *
+from django.contrib.auth import logout
+from .viewsHelper.reset_password import *
 User = get_user_model()
 
 ROLE_PREFIX = {
@@ -473,3 +475,7 @@ class UserCreateAPIView(APIView):
                 "role": user.role
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+def logout_view(request):
+    logout(request)
+    return redirect('login')  
