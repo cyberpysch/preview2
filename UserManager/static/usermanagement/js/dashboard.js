@@ -34,7 +34,18 @@ function proceedToRegistration() {
     bootstrap.Modal.getInstance(document.getElementById('uplineModal')).hide();
     loadRegistrationForm(currentTargetRole, parent);
 }
-
+function toggleShareTypeFields() {
+    document.querySelectorAll('[data-share-type]').forEach(field => {
+        const shareType = field.dataset.shareType; // Get the share_type value
+        const input = field.querySelector('input[name="parent_match_share"]');
+        if (shareType === "FIXED") {
+            input.setAttribute('readonly', true);
+        } else {
+            input.removeAttribute('readonly');
+        }
+    });
+}
+document.addEventListener('DOMContentLoaded', toggleShareTypeFields);
 function loadRegistrationForm(role, parent) {
     currentParentUsername = parent; // Save for the POST payload
     const dynamicDiv = document.getElementById('dynamicContent');

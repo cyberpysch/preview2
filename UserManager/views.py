@@ -49,11 +49,13 @@ def get_edit_profile_form(request):
     """Returns the partial HTML for the edit form"""
     username = request.GET.get('username')
     target_acc = get_object_or_404(Account, user__username=username)
-    
     # Send roles to the template so labels like "SUPER match share" are dynamic
     context = {
         'target_role': target_acc.role,
         'parent_role': target_acc.parent.role if target_acc.parent else 'COMPANY',
+        'target_acc': target_acc,
+        'parent_username': target_acc.parent.user.username if target_acc.parent else 'COMPANY',
+        'parent_share': target_acc.parent.match_share if target_acc.parent else 0,
     }
     return render(request, 'usermanagement/partials/editprofile.html', context)
 
