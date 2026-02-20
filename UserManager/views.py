@@ -58,6 +58,7 @@ def get_edit_profile_form(request):
         'target_acc': target_acc,
         'parent_username': target_acc.parent.user.username if target_acc.parent else 'COMPANY',
         'parent_share': target_acc.parent.match_share if target_acc.parent else 0,
+        "parent_acc": target_acc.parent if target_acc.parent else None,
     }
     return render(request, 'usermanagement/partials/editprofile.html', context)
 
@@ -128,21 +129,27 @@ def api_edit_user(request, username):
         account = get_object_or_404(Account, user__username=username)
         data = json.loads(request.body)
         user = account.user
-        parent = account.parent
-        if account.share_type == "CHANGE":
-            if int(data.get("parent_match_share")) + int(data.get("match_share")) > parent.match_share:
-                return JsonResponse({
-                    "status": "error",
-                    "message": (
-                        f"Total match share (my match share + user match share) cannot exceed {parent.match_share}. "
-                    )
-                }, status=400)
+        parent = account.parent        
         
         # Update refrence_match_share before the atomic transaction
         value = data.get("parent_match_share")
         if parent and value is not None:
             try:
+                if parent.share_type == "CHANGE":
+                    if float(data.get("parent_match_share")) + float(data.get("match_share")) > parent.match_share:
+                        return JsonResponse({
+                            "status": "error",
+                            "message": (
+                                f"Total match share (my match share + user match share) cannot exceed {parent.match_share}. "
+                            )
+                        }, status=400)
                 print("Updating parent's refrence_match_share to:",account.parent.refrence_match_share, parent.user.username, value)
+                g_parent = parent.parent.refrence_match_share
+                if g_parent:
+                    updated_g_m_share = parent.parent.refrence_match_share + parent.parent.match_share - (Decimal(str(data.get("parent_match_share", 0))) + Decimal(str(data.get("match_share", 0))))
+                    parent.parent.refrence_match_share = updated_g_m_share
+                    parent.parent.save(update_fields=['refrence_match_share'])
+                    parent.parent.refresh_from_db(fields=['refrence_match_share'])
                 account.parent.refrence_match_share = Decimal(value)
                 parent.save(update_fields=['refrence_match_share'])
                 parent.refresh_from_db(fields=['refrence_match_share'])

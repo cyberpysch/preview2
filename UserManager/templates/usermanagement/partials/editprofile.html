@@ -35,15 +35,15 @@
             <h6 class="text-muted small fw-bold border-bottom pb-1 mb-3">Match Share and Comm</h6>
             <div class="row g-4 mb-4">
                 <div class="col-md-6 border-end">
-                    <div class="row mb-2" data-share-type="{{ target_acc.share_type }}">
+                    <div class="row mb-2" data-share-type="{{ parent_acc.share_type }}">
                         <label class="col-sm-5 small text-muted">My Match Share(%)</label>
                         <div class="col-sm-7">
-                            <input type="text" name="parent_match_share" class="form-control form-control-sm bg-white" value="{{ parent_user.match_share }}" {% if target_acc.share_type != "CHANGE" %}readonly{% endif %}>
+                            <input type="text" name="parent_match_share" class="form-control form-control-sm bg-white" value="{{ parent_user.match_share }}" {% if parent_acc.share_type != "CHANGE" %}readonly{% endif %}>
                              <small class="text-danger">
-                                {% if target_acc.share_type == "FIXED" %}
-                                    (Fixed share - cannot be changed)
+                                {% if parent_acc.share_type == "FIXED" %}
+                                    (max share of {{ parent_username }} {{ parent_share }} | Fixed share - cannot be changed)
                                 {% else %}
-                                    (max share of {{ parent_username }} {{ parent_share }}%)
+                                    (max share of {{ parent_username }} {{ parent_share }})
                                 {% endif %}
     </small>
                         </div>

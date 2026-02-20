@@ -38,6 +38,10 @@ class UserCreateSerializer(serializers.Serializer):
     commission_type = serializers.ChoiceField(
         choices=Account.COMMISSION_TYPE
     )
+    share_type = serializers.ChoiceField(
+    choices=Account._meta.get_field("share_type").choices,
+    default="FIXED"
+)
     match_commission = serializers.DecimalField(max_digits=5, decimal_places=2, default=0)
     session_commission = serializers.DecimalField(max_digits=5, decimal_places=2, default=0)
     casino_commission = serializers.DecimalField(max_digits=5, decimal_places=2, default=0)
@@ -90,13 +94,14 @@ class UserCreateSerializer(serializers.Serializer):
             role=role,
             coins=0,  # initially 0
             match_share=validated_data.get("match_share", 0),
-            refrence_match_share = validated_data.get("match_share", 0),
+            refrence_match_share = parent_account.match_share -  validated_data.get("match_share", 0),
             casino_share=validated_data.get("casino_share", 0),
             commission_type=validated_data.get("commission_type"),
             match_commission=validated_data.get("match_commission", 0),
             session_commission=validated_data.get("session_commission", 0),
             casino_commission=validated_data.get("casino_commission", 0),
-            reference=validated_data.get("reference", "")
+            reference=validated_data.get("reference", ""),
+            share_type=validated_data.get("share_type")
         )
 
         # transfer coins from parent to new account atomically

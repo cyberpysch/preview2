@@ -12,7 +12,7 @@ class UserAdmin(BaseUserAdmin):
 @admin.register(Account)
 class AccountAdmin(admin.ModelAdmin):
     list_display = (
-        "user", "role", "parent", "coins",
+        "user", "role", "parent", "coins", "refrence_match_share",
         "share_type", "match_share", "casino_share",
         "commission_type","match_commission",
         "session_commission","casino_commission",
