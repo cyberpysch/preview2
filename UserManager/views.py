@@ -127,13 +127,15 @@ def api_edit_user(request, username):
         data = json.loads(request.body)
         user = account.user
         parent = account.parent
-        if int(data.get("parent_match_share")) + int(data.get("match_share")) > parent.match_share:
-            return JsonResponse({
-                "status": "error",
-                "message": (
-                    f"Total match share (my match share + user match share) cannot exceed {parent.match_share}. "
-                )
-            }, status=400)
+        if account.share_type == "CHANGE":
+            if int(data.get("parent_match_share")) + int(data.get("match_share")) > parent.match_share:
+                return JsonResponse({
+                    "status": "error",
+                    "message": (
+                        f"Total match share (my match share + user match share) cannot exceed {parent.match_share}. "
+                    )
+                }, status=400)
+        
         # Update refrence_match_share before the atomic transaction
         value = data.get("parent_match_share")
         if parent and value is not None:
