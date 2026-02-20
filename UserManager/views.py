@@ -87,7 +87,7 @@ def get_account_data(request, username):
     }
     return JsonResponse(data)
 
-
+from decimal import Decimal, InvalidOperation
 @login_required
 def api_edit_user(request, username):
     if request.method not in ['POST', 'PATCH']:
@@ -127,6 +127,23 @@ def api_edit_user(request, username):
         data = json.loads(request.body)
         user = account.user
         parent = account.parent
+        if int(data.get("parent_match_share")) + int(data.get("match_share")) > parent.match_share:
+            return JsonResponse({
+                "status": "error",
+                "message": (
+                    f"Total match share (my match share + user match share) cannot exceed {parent.match_share}. "
+                )
+            }, status=400)
+        # Update refrence_match_share before the atomic transaction
+        value = data.get("parent_match_share")
+        if parent and value is not None:
+            try:
+                print("Updating parent's refrence_match_share to:",account.parent.refrence_match_share, parent.user.username, value)
+                account.parent.refrence_match_share = Decimal(value)
+                parent.save(update_fields=['refrence_match_share'])
+                parent.refresh_from_db(fields=['refrence_match_share'])
+            except Exception as e:
+                return JsonResponse({"status": "error", "message": f"Failed to update refrence_match_share: {str(e)}"}, status=400)
 
         with transaction.atomic():
             # --- Update is_active ---
@@ -190,7 +207,6 @@ def api_edit_user(request, username):
             if new_commission == "NO_COMMISSION":
                 if account.role == "Agent":
                     # Cascade to all clients
-                    #cascade_no_commission(account)
                     pass
                 else:
                     # Upper levels → block if any descendant has BET_BY_BET

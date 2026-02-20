@@ -44,7 +44,8 @@ class Account(models.Model):
 
     match_share = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     casino_share = models.DecimalField(max_digits=5, decimal_places=2, default=0)
-
+    refrence_match_share = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    
     COMMISSION_TYPE = [
         ("BET_BY_BET", "Bet by Bet"),
         ("NO_COMMISSION", "No Commission"),
