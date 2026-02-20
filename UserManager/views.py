@@ -78,7 +78,7 @@ def get_account_data(request, username):
         "casino_commission": float(account.casino_commission),
 
         # LEFT COLUMN: Parent Data (Read-only)
-        "parent_match_share": float(parent.match_share) if parent else 0,
+        "parent_match_share": float(parent.refrence_match_share) if parent else 0,
         "parent_comm_type": parent.get_commission_type_display() if parent else "N/A",
         "parent_match_comm": float(parent.match_commission) if parent else 0,
         "parent_sess_comm": float(parent.session_commission) if parent else 0,
