@@ -40,7 +40,7 @@
                     <label class="form-label small fw-bold">* Coins</label>
                     <input type="number" name="coins" class="form-control" required>
                 </div>
-
+                {% if target_role|lower != "agent" and target_role|lower != "client" %}
                 <div class="col-md-6 offset-md-6">
                     <label class="form-label small fw-bold">* Share Type</label>
                     <select name="share_type" class="form-select" required>
@@ -48,7 +48,7 @@
                         <option value="CHANGE">Change</option>
                     </select>
                 </div>
-
+                {% endif %}
             </div>
 
             <!-- MATCH -->
