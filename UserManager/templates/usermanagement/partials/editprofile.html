@@ -120,3 +120,20 @@
         </form>
     </div>
 </div>
+    <style>
+        
+.form-control[readonly] {
+    background-color: #e9ecef !important;   /* darker gray */
+    color: #6c757d !important;              /* muted text */
+    border: 1px solid #ced4da !important;
+    cursor: not-allowed;
+    box-shadow: none !important;
+}
+
+/* Remove focus glow completely */
+.form-control[readonly]:focus {
+    outline: none;
+    box-shadow: none !important;
+    border-color: #ced4da !important;
+}
+</style>
