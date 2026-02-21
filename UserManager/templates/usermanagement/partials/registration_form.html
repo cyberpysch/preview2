@@ -40,7 +40,7 @@
                     <label class="form-label small fw-bold">* Coins</label>
                     <input type="number" name="coins" class="form-control" required>
                 </div>
-                {% if target_role|lower != "agent" and target_role|lower != "client" %}
+                {% if target_role|lower != "client" %}
                 <div class="col-md-6 offset-md-6">
                     <label class="form-label small fw-bold">* Share Type</label>
                     <select name="share_type" class="form-select" required>
@@ -60,9 +60,11 @@
             <div class="row g-4 mb-5">
 
                 <div class="col-md-6">
+                  
                     <label class="small text-muted fw-bold">My Match Share (%)</label>
                     <input type="text" id="my_match_share" class="form-control bg-white" value="{{my_match_share}}"
                         readonly>
+                     
                 </div>
 
                 <div class="col-md-6">
@@ -70,7 +72,9 @@
                     <input type="number" min="0" step="0.01"
        name="match_share" 
        class="form-control"
-       {% if target_role|lower == "client" %}
+       {% if target_role|lower == "client" and parent_account.share_type|lower == "fixed" %}
+           value="{{ my_match_share }}" readonly
+       {% elif target_role|lower == "client" and parent_account.share_type|lower == "change" %}
            value="{{ my_match_share }}"
        {% else %}
            value="0"

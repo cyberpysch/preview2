@@ -446,6 +446,7 @@ def get_registration_form(request):
         "my_casino_comm": parent_account.casino_commission if parent_account else current_account.casino_commission if current_account else 0,
         "my_session_comm": parent_account.session_commission if parent_account else current_account.session_commission if current_account else 0,
         "my_comm_type": "Bet by bet",
+        "parent_account": parent_account,
     }
 
     return render(
