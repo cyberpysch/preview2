@@ -76,7 +76,7 @@ class UserCreateSerializer(serializers.Serializer):
                 raise serializers.ValidationError(
                     "Cannot allocate more coins than the parent has."
                 )
-
+        return attrs
 
     def create(self, validated_data):
         username = validated_data["username"]
