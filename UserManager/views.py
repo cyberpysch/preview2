@@ -62,7 +62,7 @@ def get_edit_profile_form(request):
     }
     return render(request, 'usermanagement/partials/editprofile.html', context)
 
-
+#get account data and get edit orofile form is for a single form api
 def get_account_data(request, username):
     account = get_object_or_404(Account, user__username=username)
     parent = account.parent
@@ -81,7 +81,7 @@ def get_account_data(request, username):
         "casino_commission": float(account.casino_commission),
 
         # LEFT COLUMN: Parent Data (Read-only)
-        "parent_match_share": float(parent.refrence_match_share) if parent else 0,
+        "parent_match_share": float(parent.refrence_match_share) if parent.role.lower() !="agent" else float(parent.match_share),
         "parent_comm_type": parent.get_commission_type_display() if parent else "N/A",
         "parent_match_comm": float(parent.match_commission) if parent else 0,
         "parent_sess_comm": float(parent.session_commission) if parent else 0,

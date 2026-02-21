@@ -67,7 +67,15 @@
 
                 <div class="col-md-6">
                     <label class="small fw-bold">* Match Share (%)</label>
-                    <input type="number" name="match_share" class="form-control" required>
+                    <input type="number" 
+       name="match_share" 
+       class="form-control"
+       {% if target_role|lower == "client" %}
+           value="{{ my_match_share }}"
+       {% else %}
+           value="0"
+       {% endif %}
+       required>
                 </div>
 
                 <div class="col-md-6">
@@ -91,7 +99,15 @@
 
                 <div class="col-md-6">
                     <label class="small fw-bold commission">* Match Commission (%)</label>
-                    <input type="number" name="match_commission" class="form-control" value="0" required>
+                    <input type="number"
+       name="match_commission"
+       class="form-control"
+       {% if target_role|lower == "client" %}
+           value="{{ my_match_comm }}"
+       {% else %}
+           value="0"
+       {% endif %}
+       required>
                 </div>
                 <div class="col-md-6">
                     <label class="small text-muted fw-bold commission">My Session Commission (%)</label>
@@ -100,7 +116,7 @@
 
                 <div class="col-md-6">
                     <label class="small fw-bold commission">* Session Commission (%)</label>
-                    <input type="number" name="session_commission" class="form-control" value="0" required>
+                    <input type="number" class="form-control bg-white" value="{% if target_role|lower == 'client' %}{{ my_session_comm|default:'0' }}{% else %}0{% endif %}" required>
                 </div>
             </div>
 
@@ -120,7 +136,7 @@
 
                 <div class="col-md-6">
                     <label class="small fw-bold">* Casino Share (%)</label>
-                    <input type="number" name="casino_share" class="form-control" required>
+                    <input type="number" name="casino_share" class="form-control" value="{% if target_role|lower == 'client' %}{{ my_casino_share|default:'0' }}{% else %}0{% endif %}" required>
                 </div>
 
                 <div class="col-md-6">
@@ -131,7 +147,7 @@
 
                 <div class="col-md-6">
                     <label class="small fw-bold commission">* Casino Commission (%)</label>
-                    <input type="number" name="casino_commission" class="form-control"  value="0" required>
+                    <input type="number" name="casino_commission" class="form-control"  value="{% if target_role|lower == 'client' %}{{ my_casino_comm|default:'0' }}{% else %}0{% endif %}" required>
                 </div>
 
             </div>
