@@ -144,12 +144,14 @@ def api_edit_user(request, username):
                             )
                         }, status=400)
                 print("Updating parent's refrence_match_share to:",account.parent.refrence_match_share, parent.user.username, value)
-                g_parent = parent.parent.refrence_match_share
-                if g_parent:
+
+                # Check if grandparent exists before accessing refrence_match_share
+                if parent.parent:
                     updated_g_m_share = parent.parent.refrence_match_share + parent.parent.match_share - (Decimal(str(data.get("parent_match_share", 0))) + Decimal(str(data.get("match_share", 0))))
                     parent.parent.refrence_match_share = updated_g_m_share
                     parent.parent.save(update_fields=['refrence_match_share'])
                     parent.parent.refresh_from_db(fields=['refrence_match_share'])
+
                 account.parent.refrence_match_share = Decimal(value)
                 parent.save(update_fields=['refrence_match_share'])
                 parent.refresh_from_db(fields=['refrence_match_share'])
@@ -485,4 +487,4 @@ class UserCreateAPIView(APIView):
     
 def logout_view(request):
     logout(request)
-    return redirect('login')  
+    return redirect('login')
