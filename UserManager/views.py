@@ -130,7 +130,8 @@ def api_edit_user(request, username):
         data = json.loads(request.body)
         user = account.user
         parent = account.parent        
-        
+        if account.role.lower() != "agent":
+            account.match_share
         # Update refrence_match_share before the atomic transaction
         value = data.get("parent_match_share")
         if parent and value is not None:
