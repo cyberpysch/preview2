@@ -655,13 +655,19 @@ function toggleCommissionFields() {
     commissionFields.forEach(function (el) {
         var parentCol = el.closest(".col-md-6");
 
-        if (commissionType.value === "NO_COMMISSION") {
-            parentCol.style.display = "none";
-        } else {
+        // Show ONLY when Bet by bet selected
+        if (commissionType.value === "bet_by_bet") {
             parentCol.style.display = "";
+        } else {
+            parentCol.style.display = "none";
         }
     });
 }
+
+// Run on page load
+document.addEventListener("DOMContentLoaded", function () {
+    toggleCommissionFields();
+});
 
 // Run when dropdown changes
 document.addEventListener("change", function (e) {
