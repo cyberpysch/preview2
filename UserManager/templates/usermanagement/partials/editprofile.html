@@ -67,7 +67,7 @@
                     <div class="row mb-2">
                         {% if target_role|lower != "client" %}
                         <label class="col-sm-5 small text-danger">* {{ target_role }} Match Share(%)</label>
-                        <div class="col-sm-7"><input type="number" step="0.01" name="match_share" class="form-control form-control-sm"></div>
+                        <div class="col-sm-7"><input type="number" step="0.01" name="match_share" step="0.01" class="form-control form-control-sm"></div>
                         {% endif %}
                     </div>
                     <div class="row mb-2">
@@ -81,11 +81,11 @@
                     </div>
                     <div class="row mb-2">
                         <label class="col-sm-5 small text-danger">* {{ target_role }} match comm(%)</label>
-                        <div class="col-sm-7"><input type="number" step="0.01" name="match_commission" class="form-control form-control-sm"></div>
+                        <div class="col-sm-7"><input type="number" step="0.01" name="match_commission" step="0.01" class="form-control form-control-sm"></div>
                     </div>
                     <div class="row mb-2">
                         <label class="col-sm-5 small text-danger">* {{ target_role }} sess comm(%)</label>
-                        <div class="col-sm-7"><input type="number" step="0.01" name="session_commission" class="form-control form-control-sm"></div>
+                        <div class="col-sm-7"><input type="number" step="0.01" name="session_commission" step="0.01" class="form-control form-control-sm"></div>
                     </div>
                 </div>
             </div>
