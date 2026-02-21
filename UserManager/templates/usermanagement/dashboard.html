@@ -611,13 +611,18 @@ document.addEventListener("click", function (e) {
                         <tr>
                 `;
 
+                const hideClient =
+                    field === "match_share" || field === "casino_share";
+
                 data.forEach(level => {
+                    if (hideClient && level.role === "Client") return;
                     html += `<th>${level.role}</th>`;
                 });
 
                 html += `</tr></thead><tbody><tr>`;
 
                 data.forEach(level => {
+                    if (hideClient && level.role === "Client") return;
                     html += `<td>${level[field] ?? 0}</td>`;
                 });
 
