@@ -59,12 +59,23 @@ class UserCreateSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         role = attrs.get("role")
+        coins_to_allocate = float(attrs.get("coins", 0))
+        parent_username = attrs.get("parent_username")
+
         if hasattr(self, "parent_user") and self.parent_user:
             parent_role = self.parent_user.role
             if ROLE_LEVEL[parent_role] <= ROLE_LEVEL[role]:
                 raise serializers.ValidationError(
                     "Child role must be lower than parent role."
                 )
+
+            # Validate parent's available coins
+            parent_account = self.parent_user.account
+            if coins_to_allocate > parent_account.coins:
+                raise serializers.ValidationError(
+                    "Cannot allocate more coins than the parent has."
+                )
+
         return attrs
 
     def create(self, validated_data):
