@@ -179,18 +179,22 @@ def api_edit_user(request, username):
 
     # Function to handle partnership deed updates and saving
     def update_partnership_deed(account, parent, data):
-        new_child_match_share = Decimal(data.get("match_share", "0"))
-        new_parent_match_share = Decimal(data.get("parent_match_share", "0")) if parent and parent.share_type == "CHANGE" else (Decimal(data.get("parent_match_share", "0")) if parent else Decimal("0"))
-
-        parent_absolute = parent.match_share if parent else None
-
+        try:
+            print(data)
+            new_child_match_share = Decimal(data.get("match_share"))
+            new_parent_match_share = Decimal(data.get("parent_match_share", "0")) if parent and parent.share_type == "CHANGE" else (Decimal(data.get("parent_match_share", "0")) if parent else Decimal("0"))
+        except InvalidOperation:
+            return JsonResponse({"status": "error", "message": "Invalid decimal input"}, status=400)
         # Validate sum constraint
+        parent_absolute = parent.match_share if parent else None
+        print("@@@@")
+        print("Parent absolute share:", parent_absolute)
+        print("New parent share:", new_parent_match_share, "New child share:", new_child_match_share)
         if parent and new_parent_match_share + new_child_match_share > parent_absolute:
             return JsonResponse({
                 "status": "error",
                 "message": f"My share + user share cannot exceed {parent_absolute}"
             }, status=400)
-
         # Calculate leftover for grandparent
         grandparent = parent.parent if parent else None
         if grandparent:
@@ -202,19 +206,16 @@ def api_edit_user(request, username):
                 }, status=400)
         else:
             leftover_match_share = Decimal("0")
-
         # Build partnership deed for match_share
         partnership_deed = []
-
         # Grandparent portion (leftover)
         if grandparent:
             partnership_deed.append({
                 "role": grandparent.role,
                 "username": grandparent.user.username,
                 "match_share": float(leftover_match_share),
-                "casino_share": float(grandparent.casino_share),
+                "casino_share": float(grandparent.casino_share),  # update if dynamic casino needed
             })
-
         # Parent portion
         if parent:
             partnership_deed.append({
@@ -223,7 +224,6 @@ def api_edit_user(request, username):
                 "match_share": float(new_parent_match_share),
                 "casino_share": float(parent.casino_share),
             })
-
         # Child portion
         partnership_deed.append({
             "role": account.role,
@@ -231,10 +231,13 @@ def api_edit_user(request, username):
             "match_share": float(new_child_match_share),
             "casino_share": float(account.casino_share),
         })
-
         # Save partnership deed on child account
         account.partnership_deed = partnership_deed
-        account.save(update_fields=['partnership_deed'])
+        # Update other fields as needed from data (example commissions, shares, etc.)
+        # Example: account.match_commission = Decimal(data.get("match_commission", account.match_commission or "0"))
+        # Add similar for other fields, validate as needed
+        account.save(update_fields=['partnership_deed'])  # Add other fields if updated
+
         return True
 
     # Function to handle user fields (commission, share type) update
@@ -284,7 +287,7 @@ def api_edit_user(request, username):
         data = json.loads(request.body)
         user = account.user
         parent = account.parent
-
+        print(data)
         with transaction.atomic():
             # --- Update is_active ---
             if 'is_active' in data:
@@ -292,7 +295,7 @@ def api_edit_user(request, username):
                 user.save(update_fields=['is_active'])
 
             # If client, don't update partnership deed, only user fields
-            if account.role != "Client" and parent and "match_share" in data:
+            if parent and "match_share" in data:
                 # This is where the partnership deed is updated
                 partnership_deed_status = update_partnership_deed(account, parent, data)
                 if isinstance(partnership_deed_status, JsonResponse):

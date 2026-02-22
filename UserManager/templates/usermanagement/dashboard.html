@@ -201,11 +201,31 @@ function handleEditClick(username) {
                     }
                 }
             });
-
+            // ===============================
+            // FORCE match_share = 0 FOR CLIENT
+            // ===============================
+            const childField = document.getElementById("child_match_Share");
+            const childRow = document.getElementById("childMatchRow");
+            // Client-specific logic
+            if (data.role && data.role.toLowerCase() === "client") {
+            
+                if (childField) {
+                    childField.value = "0.00";   // always 0
+                    childField.readOnly = true;  // cannot edit
+                }
+            
+                if (childRow) {
+                    childRow.style.display = "none"; // hide row visually
+                }
+            
+                if (parentField) {
+                    parentField.readOnly = false;    // parent editable
+                }
+            }
             // 4️⃣ Grab the fields after population
             const toggle = document.getElementById("toggleShare");
             const parentField = document.getElementById("parent_match_share");
-            const childField = document.getElementById("child_match_Share");
+            
                     
             // Total limit (set via data attribute or hardcoded)
             const totalLimit = parseFloat(parentField.dataset.total) || 100; // example total
@@ -280,7 +300,11 @@ function handleEditClick(username) {
             // 7️⃣ Form submission
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
-
+                // Ensure Client always submits 0
+                if (data.role && data.role.toLowerCase() === "client") {
+                    childField.value = "0.00";
+                    parentField.value = clamp(parseFloat(parentField.value) || 0, 0, totalLimit).toFixed(2);
+                }
                 // Apply final diff to ensure correct values before submit
                 const newChildValue = parseFloat(childField.value) || 0;
                 const diff = originalChildValue - newChildValue;
