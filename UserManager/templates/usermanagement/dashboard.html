@@ -156,11 +156,12 @@
 /**
  * Main function to handle the Edit User flow
  */
+
 function handleEditClick(username) {
     const dynamicDiv = document.getElementById('dynamicContent');
     const dashDiv = document.getElementById('dashboardContent');
 
-    // UI Feedback: Show loading state
+    // Show loading spinner
     dashDiv.style.display = 'none';
     dynamicDiv.style.display = 'block';
     dynamicDiv.innerHTML = `
@@ -169,7 +170,7 @@ function handleEditClick(username) {
             <p>Loading Profile for ${username}...</p>
         </div>`;
 
-    // 1. Fetch the Form HTML Template
+    // 1️⃣ Fetch the Form HTML Template
     fetch(`/get-edit-form/?username=${username}`)
         .then(res => {
             if (!res.ok) throw new Error("Failed to load form template");
@@ -177,9 +178,8 @@ function handleEditClick(username) {
         })
         .then(html => {
             dynamicDiv.innerHTML = html;
-            
-            // 2. Fetch the Actual Account Data to fill the form
-            // URL matches: path('api/get-account-data/<str:username>/', ...)
+
+            // 2️⃣ Fetch the Actual Account Data to fill the form
             return fetch(`/api/get-account-data/${username}/`);
         })
         .then(res => {
@@ -190,7 +190,7 @@ function handleEditClick(username) {
             const form = document.getElementById('editUserForm');
             if (!form) return;
 
-            // 3. Populate Form Fields automatically
+            // 3️⃣ Populate form fields FIRST
             Object.keys(data).forEach(key => {
                 const input = form.querySelector(`[name="${key}"]`);
                 if (input) {
@@ -202,21 +202,101 @@ function handleEditClick(username) {
                 }
             });
 
-            // 4. Attach the Submit Event Listener
+            // 4️⃣ Grab the fields after population
+            const toggle = document.getElementById("toggleShare");
+            const parentField = document.getElementById("parent_match_share");
+            const childField = document.getElementById("child_match_Share");
+                    
+            // Total limit (set via data attribute or hardcoded)
+            const totalLimit = parseFloat(parentField.dataset.total) || 100; // example total
+                    
+            if (!childField || !parentField) return;
+                    
+            // Store original child value
+            let originalChildValue = parseFloat(childField.value) || 0;
+                    
+            // 1️⃣ Checkbox toggle logic
+            if (toggle) {
+                toggle.addEventListener("change", function () {
+                    if (this.checked) {
+                        parentField.readOnly = false;
+                        childField.readOnly = true;
+                    } else {
+                        parentField.readOnly = true;
+                        childField.readOnly = false;
+                    }
+                });
+            }
+            
+            // 2️⃣ Utility function to clamp value within min and max
+            function clamp(value, min = 0, max = totalLimit) {
+                return Math.min(Math.max(value, min), max);
+            }
+            
+            // 3️⃣ Child → Parent difference logic
+            childField.addEventListener("input", function () {
+                let typedChild = parseFloat(childField.value) || 0;
+            
+                // Clamp child individually to 0 ≤ value ≤ total
+                typedChild = clamp(typedChild);
+            
+                // Calculate difference from original
+                let diff = originalChildValue - typedChild;
+            
+                let parentVal = parseFloat(parentField.value) || 0;
+                let newParentVal = clamp(parentVal + diff);
+            
+                // Ensure sum of both does not exceed total
+                if (typedChild + newParentVal > totalLimit) {
+                    alert(`Child + Parent cannot exceed total of ${totalLimit}`);
+                    childField.value = originalChildValue; // revert
+                    return;
+                }
+            
+                childField.value = typedChild;
+                parentField.value = newParentVal;
+            
+                originalChildValue = typedChild;
+            });
+            
+            // 4️⃣ Parent input if editable
+            parentField.addEventListener("input", function () {
+                let typedParent = parseFloat(parentField.value) || 0;
+            
+                // Clamp parent individually to 0 ≤ value ≤ total
+                typedParent = clamp(typedParent);
+            
+                let childVal = parseFloat(childField.value) || 0;
+            
+                // Ensure sum of both does not exceed total
+                if (typedParent + childVal > totalLimit) {
+                    alert(`Parent + Child cannot exceed total of ${totalLimit}`);
+                    parentField.value = clamp(totalLimit - childVal);
+                    return;
+                }
+            
+                parentField.value = typedParent;
+            });
+            // 7️⃣ Form submission
             form.addEventListener('submit', function(e) {
-                e.preventDefault(); // Stop page refresh/GET request
-                
+                e.preventDefault();
+
+                // Apply final diff to ensure correct values before submit
+                const newChildValue = parseFloat(childField.value) || 0;
+                const diff = originalChildValue - newChildValue;
+                parentField.value = (parseFloat(parentField.value) + diff).toFixed(2);
+                childField.value = newChildValue.toFixed(2);
+
                 const formData = new FormData(form);
                 const jsonData = Object.fromEntries(formData.entries());
 
-                // Manually handle checkboxes (FormData skips unchecked boxes)
+                // Handle checkboxes manually
                 const checkBoxes = form.querySelectorAll('input[type="checkbox"]');
                 checkBoxes.forEach(cb => {
                     jsonData[cb.name] = cb.checked;
                 });
 
-                // 5. Send POST to Save Data
-                // URL matches: path('api/accounts/edit/<str:username>/', ...)
+                // Send POST request
                 fetch(`/api/accounts/edit/${username}/`, {
                     method: 'POST',
                     headers: {
@@ -229,8 +309,8 @@ function handleEditClick(username) {
                 .then(result => {
                     if (result.status === 'success') {
                         alert("Successfully Updated!");
-                        // Optional: return to dashboard
-                        // location.reload(); 
+                        // Optionally refresh or navigate
+                        // location.reload();
                     } else {
                         alert("Error: " + result.message);
                     }
@@ -240,6 +320,7 @@ function handleEditClick(username) {
                     alert("Failed to save changes.");
                 });
             });
+
         })
         .catch(err => {
             console.error("Edit Flow Error:", err);
@@ -254,7 +335,7 @@ function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
         const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
+        for (let i=0; i<cookies.length; i++) {
             const cookie = cookies[i].trim();
             if (cookie.substring(0, name.length + 1) === (name + '=')) {
                 cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
@@ -583,7 +664,7 @@ $(document).on("click", ".account-operations-link", function(e) {
 });
 
 
-</script>
+</script><!--
 <script>
 document.addEventListener("click", function (e) {
 
@@ -594,6 +675,76 @@ document.addEventListener("click", function (e) {
 
     fetch(`/api/deed/${username}/`)
         .then(res => res.json())
+        .then(data => {
+
+            document.getElementById("deedUsername").innerText = username;
+
+            let html = "";
+
+            function buildSection(title, field) {
+
+                html += `<h6 class="mt-3">${title}</h6>`;
+
+                html += `
+                <div class="table-responsive">
+                <table class="table table-bordered table-sm text-center">
+                    <thead class="table-dark">
+                        <tr>
+                `;
+
+                const hideClient =
+                    field === "match_share" || field === "casino_share";
+
+                data.forEach(level => {
+                    if (hideClient && level.role === "Client") return;
+                    html += `<th>${level.role}</th>`;
+                });
+
+                html += `</tr></thead><tbody><tr>`;
+
+                data.forEach(level => {
+                    if (hideClient && level.role === "Client") return;
+                    html += `<td>${level[field] ?? 0}</td>`;
+                });
+
+                html += `</tr></tbody></table></div>`;
+            }
+
+            buildSection("Match Share", "match_share");
+            buildSection("Casino Share", "casino_share");
+            buildSection("Match Commission", "match_commission");
+            buildSection("Session Commission", "session_commission");
+            buildSection("Casino Commission", "casino_commission");
+
+            document.getElementById("deedContent").innerHTML = html;
+
+            const modal = new bootstrap.Modal(
+                document.getElementById("partnershipModal")
+            );
+            modal.show();
+        })
+        .catch(error => {
+            console.error(error);
+            alert("Failed to load partnership data");
+        });
+
+});
+</script>-->
+<script>
+    document.addEventListener("click", function (e) {
+
+    const button = e.target.closest(".partnership-btn");
+    if (!button) return;
+
+    const username = button.dataset.username;
+
+    fetch(`/api/branch-deed/${username}/`)
+        .then(res => {
+            if (!res.ok) {
+                throw new Error("Failed to fetch deed");
+            }
+            return res.json();
+        })
         .then(data => {
 
             document.getElementById("deedUsername").innerText = username;
@@ -722,5 +873,28 @@ URL: ${window.location.origin}`;
     .catch(err => alert("Error: " + err));
 }
 </script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
 
+    const toggle = document.getElementById("toggleShare");
+    const parentField = document.getElementById("parent_match_share");
+    const childField = document.getElementById("child_match_Share");
+
+    if (!toggle || !parentField || !childField) {
+        console.log("Elements not found");
+        return;
+    }
+
+    toggle.addEventListener("change", function () {
+        if (this.checked) {
+            parentField.readOnly = false;
+            childField.readOnly = true;
+        } else {
+            parentField.readOnly = true;
+            childField.readOnly = false;
+        }
+    });
+
+});
+</script>
 </html>
