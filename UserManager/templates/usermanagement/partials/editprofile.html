@@ -46,9 +46,10 @@
                     <div class="row mb-2" data-share-type="{{ parent_acc.share_type }}">
                         <label class="col-sm-5 small text-muted">My Match Share(%)</label>
                         <div class="col-sm-7">
-                            <input type="text" name="parent_match_share" id="parent_match_share" data-total="{{ parent_share }}"
-                                class="form-control form-control-sm bg-white"
-                                value="{{ parent_match_share }}" {% if parent_acc.share_type != "CHANGE" %}readonly{% endif %}>
+                            <input type="text" name="parent_match_share" id="parent_match_share"
+                                data-total="{{ parent_share }}" class="form-control form-control-sm bg-white"
+                                value="{{ parent_match_share }}" {% if parent_acc.share_type != "CHANGE" %}readonly
+                                {% endif %}>
                             <div class="form-check mt-2">
                                 {% if parent_acc.share_type == "CHANGE" %}
                                 <input class="form-check-input" type="checkbox" id="toggleShare">
@@ -57,7 +58,7 @@
                                 </label>
                                 {% endif %}
                             </div>
-                            <small class="text-danger" id = "parent_share">
+                            <small class="text-danger" id="parent_share">
                                 {% if parent_acc.share_type == "FIXED" %}
                                 (max share of {{ parent_username }} {{ parent_share }} | Fixed share - cannot be
                                 changed)
@@ -85,25 +86,20 @@
                 </div>
 
                 <div class="col-md-6">
-                    <div class="row mb-2" id="childMatchRow">
-    <label class="col-sm-5 small text-danger" style="display:none;">* {{ target_role }} Match Share (%)</label>
-    <div class="col-sm-7">
-        <input type="number" 
-               min="0" 
-               step="0.01" 
-               name="match_share" 
-               id="child_match_Share" 
-               value="0.00" 
-               class="form-control form-control-sm" 
-               readonly>
-    </div>
-</div>
+                    <div class="row mb-2" id="childMatchRow" {% if target_role|lower == "client" %} style="display:none;" {% endif %}>
+                        <label class="col-sm-5 small text-danger" >* {% if target_role|lower == "client" %} Agent {% else %} {{ target_role }}{% endif %} Match Share
+                            (%)</label>
+                        <div class="col-sm-7">
+                            <input type="number" min="0" step="0.01" name="match_share" id="child_match_Share"
+                                value="0.00" class="form-control form-control-sm" {% if target_role|lower == "client" %} readonly {% endif %}>
+                        </div>
+                    </div>
                     <div class="row mb-2">
                         <label class="col-sm-5 small text-danger">* {{ target_role }} comm type</label>
                         <div class="col-sm-7">
                             <select name="match_comm_type" class="form-select form-select-sm">
-                                <option value="bet_by_bet" >Bet by bet</option>
-                                <option value="no_commission" >No Commission</option>
+                                <option value="bet_by_bet">Bet by bet</option>
+                                <option value="no_commission">No Commission</option>
                             </select>
                         </div>
                     </div>
@@ -127,9 +123,10 @@
                 <div class="col-md-6 border-end">
                     <div class="row mb-2">
                         <label class="col-sm-5 small text-muted">My Casino Share(%)</label>
-                        <div class="col-sm-7"><input type="text" name="parent_casino_share"
-                                value="{{ parent_acc.casino_share|default:0 }}"
-                                class="form-control form-control-sm bg-white" readonly></div>
+                        <div class="col-sm-7"><input type="text" name="parent_casino_share" id="parent_casino_share" data-total="{{ parent_acc.casino_share|default:0 }}"
+                                value="{{ parent_casino_share|default:0 }}"
+                                class="form-control form-control-sm bg-white" {% if parent_acc.share_type != "CHANGE" %}readonly
+                                {% endif %}></div>
                     </div>
                     <div class="row mb-2">
                         <label class="col-sm-5 small text-muted">My Casino Comm(%)</label>
@@ -139,16 +136,17 @@
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="row mb-2">
-                        <label class="col-sm-5 small text-danger">* {{ target_role }} casino Share(%)</label>
-                        <div class="col-sm-7"><input type="number" min="0" step="0.01" name="casino_share"
-                                value="{{ target_acc.casino_share|default:0 }}" class="form-control form-control-sm">
+                    <div class="row mb-2" id="childCasinoRow" {% if target_role|lower == "client" %} style="display:none;" {% endif %}>
+                        <label class="col-sm-5 small text-danger">* {% if target_role|lower == "client" %} Agent {{ parent_acc.user.username }} {% else %} {{ target_role }}{% endif %} casino Share(%)</label>
+                        <div class="col-sm-7">
+                            <input type="number" min="0" step="0.01" name="casino_share" id="child_casino_share" 
+                                value="{{ child_casino_share }}" class="form-control form-control-sm" {% if target_role|lower == "client" %} readonly {% endif %}>
                         </div>
                     </div>
                     <div class="row mb-2">
                         <label class="col-sm-5 small text-danger">* {{ target_role }} casino comm(%)</label>
                         <div class="col-sm-7"><input type="number" min="0" step="0.01" name="casino_commission"
-                                value="{{ target_acc.casino_comm|default:0 }}" class="form-control form-control-sm">
+                                value="{{ target_acc.casino_commission }}" class="form-control form-control-sm" > 
                         </div>
                     </div>
                 </div>

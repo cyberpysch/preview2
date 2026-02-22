@@ -144,8 +144,10 @@
                 </div>
 
                 <div class="col-md-6">
+                    {% if target_role|lower != "client" %}
                     <label class="small fw-bold">* Casino Share (%)</label>
                     <input type="number" name="casino_share" class="form-control" min="0" step="0.01" value="{% if target_role|lower == 'client' %}{{ my_casino_share|default:'0' }}{% else %}0{% endif %}" required>
+                    {% endif %}
                 </div>
 
                 <div class="col-md-6">

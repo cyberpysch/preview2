@@ -204,8 +204,17 @@ function handleEditClick(username) {
             // ===============================
             // FORCE match_share = 0 FOR CLIENT
             // ===============================
+            
+            // Grab all fields FIRST
+            const parentField = document.getElementById("parent_match_share");
             const childField = document.getElementById("child_match_Share");
             const childRow = document.getElementById("childMatchRow");
+
+            const parentCasinoField = document.getElementById("parent_casino_share");
+            const childCasinoField = document.getElementById("child_casino_share");
+            const childCasinoRow = document.getElementById("childCasinoRow");
+
+            const toggle = document.getElementById("toggleShare");
             // Client-specific logic
             if (data.role && data.role.toLowerCase() === "client") {
             
@@ -221,10 +230,15 @@ function handleEditClick(username) {
                 if (parentField) {
                     parentField.readOnly = false;    // parent editable
                 }
+                if (childCasinoField) {
+                    childCasinoField.value = "0.00";
+                    childCasinoField.readOnly = true;
+                }
+
+                if (childCasinoRow) {
+                    childCasinoRow.style.display = "none";
+                }
             }
-            // 4️⃣ Grab the fields after population
-            const toggle = document.getElementById("toggleShare");
-            const parentField = document.getElementById("parent_match_share");
             
                     
             // Total limit (set via data attribute or hardcoded)
@@ -236,35 +250,52 @@ function handleEditClick(username) {
             let originalChildValue = parseFloat(childField.value) || 0;
                     
             // 1️⃣ Checkbox toggle logic
+            //if (toggle) {
+            //    toggle.addEventListener("change", function () {
+            //        if (this.checked) {
+            //            parentField.readOnly = false;
+            //            childField.readOnly = true;
+            //        } else {
+            //            parentField.readOnly = true;
+            //            childField.readOnly = false;
+            //        }
+            //    });
+            //}
             if (toggle) {
                 toggle.addEventListener("change", function () {
-                    if (this.checked) {
-                        parentField.readOnly = false;
-                        childField.readOnly = true;
-                    } else {
-                        parentField.readOnly = true;
-                        childField.readOnly = false;
-                    }
+                
+                    const isChecked = this.checked;
+                
+                    // MATCH FIELDS
+                    if (parentField) parentField.readOnly = !isChecked;
+                    if (childField) childField.readOnly = isChecked;
+                
+                    // CASINO FIELDS
+                    if (parentCasinoField) parentCasinoField.readOnly = !isChecked;
+                    if (childCasinoField) childCasinoField.readOnly = isChecked;
+                
                 });
             }
             
             // 2️⃣ Utility function to clamp value within min and max
-            function clamp(value, min = 0, max = totalLimit) {
+            function clamp(value, min, max) {
                 return Math.min(Math.max(value, min), max);
             }
             
             // 3️⃣ Child → Parent difference logic
             childField.addEventListener("input", function () {
-                let typedChild = parseFloat(childField.value) || 0;
+                let typedChild = parseFloat(childField.value);
+                if (isNaN(typedChild)) typedChild = 0; // ✅ default to 0
             
                 // Clamp child individually to 0 ≤ value ≤ total
-                typedChild = clamp(typedChild);
+                typedChild = clamp(typedChild, 0, totalLimit);
             
                 // Calculate difference from original
-                let diff = originalChildValue - typedChild;
+                let parentVal = parseFloat(parentField.value);
+                if (isNaN(parentVal)) parentVal = 0; // ✅ default to 0
             
-                let parentVal = parseFloat(parentField.value) || 0;
-                let newParentVal = clamp(parentVal + diff);
+                let diff = originalChildValue - typedChild;
+                let newParentVal = clamp(parentVal + diff, 0, totalLimit);
             
                 // Ensure sum of both does not exceed total
                 if (typedChild + newParentVal > totalLimit) {
@@ -281,22 +312,74 @@ function handleEditClick(username) {
             
             // 4️⃣ Parent input if editable
             parentField.addEventListener("input", function () {
-                let typedParent = parseFloat(parentField.value) || 0;
+                let typedParent = parseFloat(parentField.value);
+                if (isNaN(typedParent)) typedParent = 0; // ✅ default to 0
             
-                // Clamp parent individually to 0 ≤ value ≤ total
-                typedParent = clamp(typedParent);
+                typedParent = clamp(typedParent, 0, totalLimit);
             
-                let childVal = parseFloat(childField.value) || 0;
+                let childVal = parseFloat(childField.value);
+                if (isNaN(childVal)) childVal = 0; // ✅ default to 0
             
                 // Ensure sum of both does not exceed total
                 if (typedParent + childVal > totalLimit) {
                     alert(`Parent + Child cannot exceed total of ${totalLimit}`);
-                    parentField.value = clamp(totalLimit - childVal);
+                    parentField.value = clamp(totalLimit - childVal, 0, totalLimit);
                     return;
                 }
             
                 parentField.value = typedParent;
             });
+            
+            // ===============================
+            // CASINO SHARE TRANSFER LOGIC (FIXED)
+            // ===============================
+
+            const totalLimitCasino = parseFloat(parentCasinoField?.dataset.total) || 0;
+            let originalChildCasinoValue = parseFloat(childCasinoField?.value) || 0;
+
+            if (childCasinoField && parentCasinoField) {
+            
+                // CHILD → PARENT (difference logic like match)
+                childCasinoField.addEventListener("input", function () {
+                
+                    let typedChild = parseFloat(childCasinoField.value) || 0;
+                
+                    typedChild = clamp(typedChild, 0, totalLimitCasino);
+                
+                    let diff = originalChildCasinoValue - typedChild;
+                
+                    let parentVal = parseFloat(parentCasinoField.value) || 0;
+                    let newParentVal = clamp(parentVal + diff, 0, totalLimitCasino);
+                
+                    if (typedChild + newParentVal > totalLimitCasino) {
+                        alert(`Casino Child + Parent cannot exceed total of ${totalLimitCasino}`);
+                        childCasinoField.value = originalChildCasinoValue;
+                        return;
+                    }
+                
+                    childCasinoField.value = typedChild;
+                    parentCasinoField.value = newParentVal;
+                
+                    originalChildCasinoValue = typedChild;
+                });
+            
+                // PARENT EDIT (no transfer to child, only restrict total)
+                parentCasinoField.addEventListener("input", function () {
+                
+                    let typedParent = parseFloat(parentCasinoField.value) || 0;
+                
+                    typedParent = clamp(typedParent, 0, totalLimitCasino);
+                
+                    let childVal = parseFloat(childCasinoField.value) || 0;
+                
+                    if (typedParent + childVal > totalLimitCasino) {
+                        parentCasinoField.value = clamp(totalLimitCasino - childVal, 0, totalLimitCasino);
+                        return;
+                    }
+                
+                    parentCasinoField.value = typedParent;
+                });
+            }
             // 7️⃣ Form submission
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
@@ -304,12 +387,29 @@ function handleEditClick(username) {
                 if (data.role && data.role.toLowerCase() === "client") {
                     childField.value = "0.00";
                     parentField.value = clamp(parseFloat(parentField.value) || 0, 0, totalLimit).toFixed(2);
+                    if (childCasinoField) {
+                        childCasinoField.value = "0.00";
+                        
+                    }
                 }
                 // Apply final diff to ensure correct values before submit
                 const newChildValue = parseFloat(childField.value) || 0;
                 const diff = originalChildValue - newChildValue;
                 parentField.value = (parseFloat(parentField.value) + diff).toFixed(2);
                 childField.value = newChildValue.toFixed(2);
+
+                // Final Casino Adjustment Before Submit
+                if (childCasinoField && parentCasinoField) {
+                
+                    const newChildCasinoValue = parseFloat(childCasinoField.value) || 0;
+                    const diffCasino = originalChildCasinoValue - newChildCasinoValue;
+                
+                    parentCasinoField.value = (
+                        parseFloat(parentCasinoField.value) + diffCasino
+                    ).toFixed(2);
+                
+                    childCasinoField.value = newChildCasinoValue.toFixed(2);
+                }
 
                 const formData = new FormData(form);
                 const jsonData = Object.fromEntries(formData.entries());

@@ -60,13 +60,18 @@ def get_edit_profile_form(request):
         for item in partnership_deed:
             if parent_acc and item["username"] == parent_acc.user.username:
                 parent_dynamic_share = item["match_share"]
+                parent_casino_share = item["casino_share"]
                 print("Found parent dynamic share:", parent_dynamic_share)
             if item["username"] == target_acc.user.username:
                 child_dynamic_share = item["match_share"]
+                child_casino_share = item["casino_share"]
                 print("Found child dynamic share:", child_dynamic_share)
     print("@@@@")
     print(child_dynamic_share)
     print(parent_dynamic_share)
+    print("------------")
+    print(child_casino_share)
+    print(parent_casino_share)
     context = {
         'target_role': target_acc.role,
         'parent_role': parent_acc.role if parent_acc else 'COMPANY',
@@ -76,6 +81,8 @@ def get_edit_profile_form(request):
         'parent_acc': parent_acc,
         'parent_match_share': parent_dynamic_share if parent_dynamic_share else float(parent_acc.match_share - target_acc.match_share),
         'match_share': child_dynamic_share if child_dynamic_share else float(target_acc.match_share),
+        'parent_casino_share': parent_casino_share if parent_casino_share else float(parent_acc.casino_share - target_acc.casino_share) if parent_acc else 0,
+        'child_casino_share': child_casino_share if child_casino_share else float(target_acc.casino_share),
     }
 
     return render(request, 'usermanagement/partials/editprofile.html', context)
@@ -180,9 +187,10 @@ def api_edit_user(request, username):
     # Function to handle partnership deed updates and saving
     def update_partnership_deed(account, parent, data):
         try:
-            print(data)
             new_child_match_share = Decimal(data.get("match_share"))
             new_parent_match_share = Decimal(data.get("parent_match_share", "0")) if parent and parent.share_type == "CHANGE" else (Decimal(data.get("parent_match_share", "0")) if parent else Decimal("0"))
+            new_child_casino_share = Decimal(data.get("casino_share"))
+            new_parent_casino_share = Decimal(data.get("parent_casino_share", "0"))
         except InvalidOperation:
             return JsonResponse({"status": "error", "message": "Invalid decimal input"}, status=400)
         # Validate sum constraint
@@ -199,6 +207,7 @@ def api_edit_user(request, username):
         grandparent = parent.parent if parent else None
         if grandparent:
             leftover_match_share = grandparent.match_share - new_parent_match_share - new_child_match_share
+            leftover_casino_share = grandparent.casino_share - new_parent_casino_share - new_child_casino_share
             if leftover_match_share < 0:
                 return JsonResponse({
                     "status": "error",
@@ -214,7 +223,10 @@ def api_edit_user(request, username):
                 "role": grandparent.role,
                 "username": grandparent.user.username,
                 "match_share": float(leftover_match_share),
-                "casino_share": float(grandparent.casino_share),  # update if dynamic casino needed
+                "casino_share": float(leftover_casino_share),  # update if dynamic casino needed
+                "match_commission": float(grandparent.match_commission),
+                "session_commission": float(grandparent.session_commission),
+                "casino_commission": float(grandparent.casino_commission),
             })
         # Parent portion
         if parent:
@@ -222,14 +234,20 @@ def api_edit_user(request, username):
                 "role": parent.role,
                 "username": parent.user.username,
                 "match_share": float(new_parent_match_share),
-                "casino_share": float(parent.casino_share),
+                "casino_share": float(new_parent_casino_share),
+                "match_commission": float(parent.match_commission),
+                "session_commission": float(parent.session_commission),
+                "casino_commission": float(parent.casino_commission),
             })
         # Child portion
         partnership_deed.append({
             "role": account.role,
             "username": account.user.username,
             "match_share": float(new_child_match_share),
-            "casino_share": float(account.casino_share),
+            "casino_share": float(new_child_casino_share),
+            "match_commission": float(account.match_commission),
+            "session_commission": float(account.session_commission),
+            "casino_commission": float(account.casino_commission),
         })
         # Save partnership deed on child account
         account.partnership_deed = partnership_deed

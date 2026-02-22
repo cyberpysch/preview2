@@ -105,8 +105,8 @@ class UserCreateSerializer(serializers.Serializer):
             role=role,
             coins=0,  # initially 0
             match_share=validated_data.get("match_share", 0) if role.lower() != "client" else 0,
-            refrence_match_share = parent_account.match_share -  validated_data.get("match_share", 0),
-            casino_share=validated_data.get("casino_share", 0),
+            refrence_match_share = (parent_account.match_share -  validated_data.get("match_share", 0)) if role.lower() != "client" else 0,
+            casino_share=validated_data.get("casino_share", 0) if role.lower() != "client" else 0,
             commission_type=validated_data.get("commission_type"),
             match_commission=validated_data.get("match_commission", 0) if validated_data.get("commission_type") == "BET_BY_BET" else 0,
             session_commission=validated_data.get("session_commission", 0) if validated_data.get("commission_type") == "BET_BY_BET" else 0,
