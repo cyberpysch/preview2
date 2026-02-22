@@ -119,26 +119,39 @@ def get_edit_profile_form(request):
 def get_account_data(request, username):
     account = get_object_or_404(Account, user__username=username)
     parent = account.parent
+    partnership_deed = compute_partnership_deed(account)
 
+    parent_dynamic_share = None
+    child_dynamic_share = None
+    if partnership_deed:
+        for item in partnership_deed:
+            if parent and item["username"] == parent.user.username:
+                parent_dynamic_share = item["match_share"]
+                parent_casino_share = item["casino_share"]
+                print("Found parent dynamic share:", parent_dynamic_share)
+            if item["username"] == account.user.username:
+                child_dynamic_share = item["match_share"]
+                child_casino_share = item["casino_share"]
+                print("Found child dynamic share:", child_dynamic_share)
     data = {
         "username": account.user.username,
         "is_active": "true" if account.user.is_active else "false",
         "share_type": account.share_type,
 
         # RIGHT COLUMN: Target User Data
-        "match_share": float(account.match_share),
+        "match_share": float(child_dynamic_share) if child_dynamic_share is not None else float(account.match_share),
         "match_comm_type": "bet_by_bet" if account.commission_type == "BET_BY_BET" else "no_commission",
         "match_commission": float(account.match_commission),
         "session_commission": float(account.session_commission),
-        "casino_share": float(account.casino_share),
+        "casino_share": float(child_casino_share) if child_casino_share is not None else float(account.casino_share),
         "casino_commission": float(account.casino_commission),
 
         # LEFT COLUMN: Parent Data (Read-only)
-        "parent_match_share": float(parent.refrence_match_share) if parent.role.lower() !="agent" else float(parent.match_share),
+        "parent_match_share": float(parent_dynamic_share) if parent_dynamic_share is not None else float(parent.match_share),
         "parent_comm_type": parent.get_commission_type_display() if parent else "N/A",
         "parent_match_comm": float(parent.match_commission) if parent else 0,
         "parent_sess_comm": float(parent.session_commission) if parent else 0,
-        "parent_casino_share": float(parent.casino_share) if parent else 0,
+        "parent_casino_share": float(parent_casino_share) if parent_casino_share else (float(parent.casino_share) if parent else 0),
         "parent_casino_comm": float(parent.casino_commission) if parent else 0,
     }
     return JsonResponse(data)
