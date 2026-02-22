@@ -33,5 +33,12 @@ urlpatterns = [
 
    
 
+    # Isolated branch deed
+    path(
+        "api/branch-deed/<str:username>/",
+        IsolatedBranchDeedAPIView.as_view(),
+        name="api_branch_deed"
+    ),
+
 
 ]

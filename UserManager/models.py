@@ -73,7 +73,11 @@ class Account(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     is_enabled_by_parent = models.BooleanField(default=True)
-
+    partnership_deed = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Stores dynamic partnership values for the hierarchy of this account"
+    )
     class Meta:
         constraints = [
             models.CheckConstraint(

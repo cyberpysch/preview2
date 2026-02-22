@@ -48,19 +48,65 @@ ROLE_PREFIX = {
 
 @login_required
 def get_edit_profile_form(request):
-    """Returns the partial HTML for the edit form"""
     username = request.GET.get('username')
     target_acc = get_object_or_404(Account, user__username=username)
-    # Send roles to the template so labels like "SUPER match share" are dynamic
+    parent_acc = target_acc.parent
+
+    partnership_deed = compute_partnership_deed(target_acc)
+
+    parent_dynamic_share = None
+    child_dynamic_share = None
+    if partnership_deed:
+        for item in partnership_deed:
+            if parent_acc and item["username"] == parent_acc.user.username:
+                parent_dynamic_share = item["match_share"]
+                print("Found parent dynamic share:", parent_dynamic_share)
+            if item["username"] == target_acc.user.username:
+                child_dynamic_share = item["match_share"]
+                print("Found child dynamic share:", child_dynamic_share)
+    print("@@@@")
+    print(child_dynamic_share)
+    print(parent_dynamic_share)
     context = {
         'target_role': target_acc.role,
-        'parent_role': target_acc.parent.role if target_acc.parent else 'COMPANY',
+        'parent_role': parent_acc.role if parent_acc else 'COMPANY',
         'target_acc': target_acc,
-        'parent_username': target_acc.parent.user.username if target_acc.parent else 'COMPANY',
-        'parent_share': target_acc.parent.match_share if target_acc.parent else 0,
-        "parent_acc": target_acc.parent if target_acc.parent else None,
+        'parent_username': parent_acc.user.username if parent_acc else 'COMPANY',
+        'parent_share': parent_acc.match_share if parent_acc else 0,
+        'parent_acc': parent_acc,
+        'parent_match_share': parent_dynamic_share if parent_dynamic_share else float(parent_acc.match_share - target_acc.match_share),
+        'match_share': child_dynamic_share if child_dynamic_share else float(target_acc.match_share),
     }
+
     return render(request, 'usermanagement/partials/editprofile.html', context)
+
+#@login_required
+#def get_edit_profile_form(request):
+#    """Returns the partial HTML for the edit form"""
+#    username = request.GET.get('username')
+#    target_acc = get_object_or_404(Account, user__username=username)
+#    parent = target_acc.parent
+#
+#    if parent:
+#        parent_absolute_share = parent.match_share
+#        parent_partnership_share = parent.match_share - target_acc.match_share
+#    else:
+#        # Top level (no parent)
+#        parent_absolute_share = target_acc.match_share
+#        parent_partnership_share = target_acc.match_share
+#    # Send roles to the template so labels like "SUPER match share" are dynamic
+#    context = {
+#        'target_role': target_acc.role,
+#        'parent_role': target_acc.parent.role if target_acc.parent else 'COMPANY',
+#        'target_acc': target_acc,
+#        'parent_username': target_acc.parent.user.username if target_acc.parent else 'COMPANY',
+#        'parent_share': target_acc.parent.match_share if target_acc.parent else 0,
+#        "parent_acc": target_acc.parent if target_acc.parent else None,
+#        "parent_absolute_share": parent_absolute_share,     # fixed bucket
+#        "parent_partnership_share": parent_partnership_share,  # upper field
+#        "child_absolute_share": target_acc.match_share,     
+#    }
+#    return render(request, 'usermanagement/partials/editprofile.html', context)
 
 #get account data and get edit orofile form is for a single form api
 def get_account_data(request, username):
@@ -91,12 +137,18 @@ def get_account_data(request, username):
     return JsonResponse(data)
 
 from decimal import Decimal, InvalidOperation
+from django.http import JsonResponse
+from django.db import transaction
+from django.shortcuts import get_object_or_404
+import json
+from .models import Account  # Assuming you have an Account model
+
 @login_required
 def api_edit_user(request, username):
     if request.method not in ['POST', 'PATCH']:
         return JsonResponse({"status": "error", "message": "Method not allowed"}, status=405)
 
-    SHARE_FIELDS = ['match_share','casino_share','match_commission','session_commission','casino_commission','coins']
+    SHARE_FIELDS = ['match_share', 'casino_share', 'match_commission', 'session_commission', 'casino_commission', 'coins']
 
     # Helper to safely parse floats
     def safe_float(value):
@@ -125,38 +177,113 @@ def api_edit_user(request, username):
                 child.save()
             cascade_no_commission(child)
 
+    # Function to handle partnership deed updates and saving
+    def update_partnership_deed(account, parent, data):
+        new_child_match_share = Decimal(data.get("match_share", "0"))
+        new_parent_match_share = Decimal(data.get("parent_match_share", "0")) if parent and parent.share_type == "CHANGE" else (Decimal(data.get("parent_match_share", "0")) if parent else Decimal("0"))
+
+        parent_absolute = parent.match_share if parent else None
+
+        # Validate sum constraint
+        if parent and new_parent_match_share + new_child_match_share > parent_absolute:
+            return JsonResponse({
+                "status": "error",
+                "message": f"My share + user share cannot exceed {parent_absolute}"
+            }, status=400)
+
+        # Calculate leftover for grandparent
+        grandparent = parent.parent if parent else None
+        if grandparent:
+            leftover_match_share = grandparent.match_share - new_parent_match_share - new_child_match_share
+            if leftover_match_share < 0:
+                return JsonResponse({
+                    "status": "error",
+                    "message": "Leftover share cannot be negative, invalid distribution"
+                }, status=400)
+        else:
+            leftover_match_share = Decimal("0")
+
+        # Build partnership deed for match_share
+        partnership_deed = []
+
+        # Grandparent portion (leftover)
+        if grandparent:
+            partnership_deed.append({
+                "role": grandparent.role,
+                "username": grandparent.user.username,
+                "match_share": float(leftover_match_share),
+                "casino_share": float(grandparent.casino_share),
+            })
+
+        # Parent portion
+        if parent:
+            partnership_deed.append({
+                "role": parent.role,
+                "username": parent.user.username,
+                "match_share": float(new_parent_match_share),
+                "casino_share": float(parent.casino_share),
+            })
+
+        # Child portion
+        partnership_deed.append({
+            "role": account.role,
+            "username": account.user.username,
+            "match_share": float(new_child_match_share),
+            "casino_share": float(account.casino_share),
+        })
+
+        # Save partnership deed on child account
+        account.partnership_deed = partnership_deed
+        account.save(update_fields=['partnership_deed'])
+        return True
+
+    # Function to handle user fields (commission, share type) update
+    def update_user_fields(account, parent, data):
+        # Validate and update commission fields if present
+        for field in ['match_commission', 'session_commission', 'casino_commission']:
+            if field in data:
+                new_value = safe_float(data.get(field))
+                parent_value = getattr(parent, field, None) if parent else None
+                if parent_value is not None and new_value > parent_value:
+                    return JsonResponse({
+                        "status": "error",
+                        "message": f"Cannot set {field} to {new_value}. Parent user '{parent.user.username}' has lower value ({parent_value})."
+                    }, status=400)
+                setattr(account, field, new_value)
+
+        # Handle share type update
+        if 'share_type' in data:
+            account.share_type = data.get('share_type', account.share_type)
+
+        # Handle NO_COMMISSION logic
+        if account.commission_type == "NO_COMMISSION":
+            if account.role == "Agent":
+                pass
+            else:
+                if any_descendant_has_bet_by_bet(account):
+                    return JsonResponse({
+                        "status": "error",
+                        "message": (
+                            "Cannot set commission to NO_COMMISSION because one or more "
+                            "descendants have BET_BY_BET commission. "
+                            "Please update all descendants first."
+                        )
+                    }, status=400)
+
+        # Apply new commission values
+        if account.commission_type == "NO_COMMISSION":
+            account.match_commission = 0
+            account.session_commission = 0
+            account.casino_commission = 0
+
+        account.save(update_fields=['match_commission', 'session_commission', 'casino_commission', 'share_type'])
+        return True
+
     try:
         account = get_object_or_404(Account, user__username=username)
         data = json.loads(request.body)
         user = account.user
-        parent = account.parent        
-        
-        # Update refrence_match_share before the atomic transaction
-        value = data.get("parent_match_share")
-        if parent and value is not None:
-            try:
-                if parent.share_type == "CHANGE":
-                    if float(data.get("parent_match_share")) + float(data.get("match_share")) > parent.match_share:
-                        return JsonResponse({
-                            "status": "error",
-                            "message": (
-                                f"Total match share (my match share + user match share) cannot exceed {parent.match_share}. "
-                            )
-                        }, status=400)
-                print("Updating parent's refrence_match_share to:",account.parent.refrence_match_share, parent.user.username, value)
-
-                # Check if grandparent exists before accessing refrence_match_share
-                if parent.parent:
-                    updated_g_m_share = parent.parent.refrence_match_share + parent.parent.match_share - (Decimal(str(data.get("parent_match_share", 0))) + Decimal(str(data.get("match_share", 0))))
-                    parent.parent.refrence_match_share = updated_g_m_share
-                    parent.parent.save(update_fields=['refrence_match_share'])
-                    parent.parent.refresh_from_db(fields=['refrence_match_share'])
-
-                account.parent.refrence_match_share = Decimal(value)
-                parent.save(update_fields=['refrence_match_share'])
-                parent.refresh_from_db(fields=['refrence_match_share'])
-            except Exception as e:
-                return JsonResponse({"status": "error", "message": f"Failed to update refrence_match_share: {str(e)}"}, status=400)
+        parent = account.parent
 
         with transaction.atomic():
             # --- Update is_active ---
@@ -164,95 +291,21 @@ def api_edit_user(request, username):
                 user.is_active = str(data.get('is_active')).lower() in ['true', '1', 'yes']
                 user.save(update_fields=['is_active'])
 
-            # --- Validate child share constraints ---
-            for field in ['match_share', 'casino_share']:
-                if field in data:
-                    new_share = safe_float(data.get(field))
-                    if account.role == "Agent":
-                        setattr(account, field, new_share)
-                    else:
-                        violating_child = account.children.order_by(f'-{field}').first()
-                        if violating_child and new_share < getattr(violating_child, field):
-                            return JsonResponse({
-                                "status": "error",
-                                "message": (
-                                    f"Cannot set {field} to {new_share}. "
-                                    f"Child user has higher value ({getattr(violating_child, field)})."
-                                )
-                            }, status=400)
-                        setattr(account, field, new_share)
+            # If client, don't update partnership deed, only user fields
+            if account.role != "Client" and parent and "match_share" in data:
+                # This is where the partnership deed is updated
+                partnership_deed_status = update_partnership_deed(account, parent, data)
+                if isinstance(partnership_deed_status, JsonResponse):
+                    return partnership_deed_status
 
-            # --- Validate parent share constraints ---
-            for field in SHARE_FIELDS:
-                if field in data:
-                    new_value = safe_float(data.get(field))
-                    if parent and new_value > getattr(parent, field):
-                        return JsonResponse({
-                            "status": "error",
-                            "message": (
-                                f"Cannot set {field.replace('_', ' ')} to {new_value}. "
-                                f"Parent user '{parent.user.username}' "
-                                f"has lower value ({getattr(parent, field)})."
-                            )
-                        }, status=400)
+            # Now update other user fields (commission and share type)
+            update_user_fields(account, parent, data)
 
-            # --- Agent: propagate match_share / casino_share to clients ---
-            if account.role == "Agent":
-                update_fields = {}
-                if 'match_share' in data:
-                    update_fields['match_share'] = account.match_share
-                if 'casino_share' in data:
-                    update_fields['casino_share'] = account.casino_share
-                if update_fields:
-                    account.children.update(**update_fields)
-
-            # --- Update share_type ---
-            account.share_type = data.get('share_type', account.share_type)
-
-            # --- Commission Logic ---
-            old_commission = account.commission_type
-            comm_val = data.get('match_comm_type')
-            new_commission = old_commission
-            if comm_val:
-                new_commission = "BET_BY_BET" if comm_val == "bet_by_bet" else "NO_COMMISSION"
-
-            # --- Handle NO_COMMISSION downgrade ---
-            if new_commission == "NO_COMMISSION":
-                if account.role == "Agent":
-                    # Cascade to all clients
-                    pass
-                else:
-                    # Upper levels → block if any descendant has BET_BY_BET
-                    if any_descendant_has_bet_by_bet(account):
-                        return JsonResponse({
-                            "status": "error",
-                            "message": (
-                                "Cannot set commission to NO_COMMISSION because one or more "
-                                "descendants have BET_BY_BET commission. "
-                                "Please update all descendants first."
-                            )
-                        }, status=400)
-
-            # Apply new commission
-            account.commission_type = new_commission
-
-            # Set commission fields
-            if account.commission_type == "NO_COMMISSION":
-                account.match_commission = 0
-                account.session_commission = 0
-                account.casino_commission = 0
-            else:
-                account.match_commission = safe_float(data.get('match_commission', account.match_commission))
-                account.session_commission = safe_float(data.get('session_commission', account.session_commission))
-                account.casino_commission = safe_float(data.get('casino_commission', account.casino_commission))
-
-            # --- Save account ---
-            account.save()
-
-        return JsonResponse({"status": "success", "message": f"Account for {username} updated"})
+            return JsonResponse({"status": "success", "message": f"Account for {username} updated successfully"})
 
     except Exception as e:
         return JsonResponse({"status": "error", "message": str(e)}, status=400)
+
 
 
 @login_required

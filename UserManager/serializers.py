@@ -46,7 +46,7 @@ class UserCreateSerializer(serializers.Serializer):
     session_commission = serializers.DecimalField(max_digits=5, decimal_places=2, default=0)
     casino_commission = serializers.DecimalField(max_digits=5, decimal_places=2, default=0)
     print("@@@@")
-    print(session_commission)
+    print(share_type)
     def validate_parent_username(self, value):
         if value:
             try:
@@ -104,7 +104,7 @@ class UserCreateSerializer(serializers.Serializer):
             parent=parent_account,
             role=role,
             coins=0,  # initially 0
-            match_share=validated_data.get("match_share", 0),
+            match_share=validated_data.get("match_share", 0) if role.lower() != "client" else 0,
             refrence_match_share = parent_account.match_share -  validated_data.get("match_share", 0),
             casino_share=validated_data.get("casino_share", 0),
             commission_type=validated_data.get("commission_type"),
@@ -112,7 +112,7 @@ class UserCreateSerializer(serializers.Serializer):
             session_commission=validated_data.get("session_commission", 0) if validated_data.get("commission_type") == "BET_BY_BET" else 0,
             casino_commission=validated_data.get("casino_commission", 0) if validated_data.get("commission_type") == "BET_BY_BET" else 0,
             reference=validated_data.get("reference", ""),
-            share_type=validated_data.get("share_type")
+            share_type=validated_data.get("share_type") if validated_data.get("share_type") else "FIXED"
         )
 
         # transfer coins from parent to new account atomically

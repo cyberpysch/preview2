@@ -114,7 +114,9 @@
                         {% if target_role == "Agent" %}
                         <th rowspan="2" class="align-middle">Exposure</th>
                         {% endif %}
+                        {% if target_role|lower != "client" %}
                         <th rowspan="2" class="align-middle">Share</th>
+                        {% endif %}
                         <th colspan="3">Agent Comm %</th>
 
                     </tr>
@@ -219,7 +221,9 @@
                                 <i class="fab fa-whatsapp"></i>
                             </a>
                         </td>-->
+                        {% if target_role|lower != "client" %}
                         <td>{{ acc.match_share }}%</td>
+                        {% endif %}
                         <td>{{ acc.match_commission }}</td>
                         <td>{{ acc.session_commission }}</td>
                         <td>{{ acc.casino_commission }}</td>
