@@ -358,24 +358,56 @@ def api_edit_user(request, username):
     except Exception as e:
         return JsonResponse({"status": "error", "message": str(e)}, status=400)
 
+def is_descendant(child, ancestor):
+    """
+    Returns True if 'ancestor' is a direct or indirect parent of 'child'
+    """
+    current = child.parent
 
+    while current is not None:
+        if current == ancestor:
+            return True
+        current = current.parent
 
+    return False
 @login_required
 def get_upline_users(request, role):
-    """
-    Return users who can act as immediate parent for `role`
-    """
+    logged_in_account = request.user.account
+
+    # Get all users with required role
     accounts = Account.objects.filter(role__iexact=role)
-    print("inside upline users")
+
+    # Filter only those inside logged-in user's subtree
+    eligible_accounts = [
+        acc for acc in accounts
+        if is_descendant(acc, logged_in_account)
+    ]
+
     data = [
         {
             "username": acc.user.username,
             "role": acc.role
         }
-        for acc in accounts
+        for acc in eligible_accounts
     ]
-    print(data)
+
     return JsonResponse(data, safe=False)
+#@login_required
+#def get_upline_users(request, role):
+#    """
+#    Return users who can act as immediate parent for `role`
+#    """
+#    accounts = Account.objects.filter(role__iexact=role)
+#    print("inside upline users")
+#    data = [
+#        {
+#            "username": acc.user.username,
+#            "role": acc.role
+#        }
+#        for acc in accounts
+#    ]
+#    print(data)
+#    return JsonResponse(data, safe=False)
 def get_all_descendants(account):
     descendants = []
     children = Account.objects.filter(parent=account).select_related('user')
