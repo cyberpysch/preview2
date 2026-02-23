@@ -207,7 +207,10 @@ def api_edit_user(request, username):
             new_child_casino_share = Decimal(data.get("casino_share"))
             new_parent_casino_share = Decimal(data.get("parent_casino_share", "0"))
             new_commission_type = data.get("match_comm_type")
-            
+            if new_child_casino_share < 0 or new_parent_casino_share < 0 or new_child_match_share <0 or new_parent_match_share <0:
+                return JsonResponse(
+                    {"status":"error","message": f"please do not use negative values"}
+                )
             if new_commission_type == "bet_by_bet":
                 new_child_casino_commission = Decimal(data.get("casino_commission"))
                 new_child_match_commission = Decimal(data.get("match_commission"))

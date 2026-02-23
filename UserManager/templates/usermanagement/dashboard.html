@@ -284,51 +284,68 @@ function handleEditClick(username) {
             
             // 3️⃣ Child → Parent difference logic
             childField.addEventListener("input", function () {
-                let typedChild = parseFloat(childField.value);
-                if (isNaN(typedChild)) typedChild = 0; // ✅ default to 0
-            
-                // Clamp child individually to 0 ≤ value ≤ total
-                typedChild = clamp(typedChild, 0, totalLimit);
-            
-                // Calculate difference from original
-                let parentVal = parseFloat(parentField.value);
-                if (isNaN(parentVal)) parentVal = 0; // ✅ default to 0
-            
-                let diff = originalChildValue - typedChild;
-                let newParentVal = clamp(parentVal + diff, 0, totalLimit);
-            
-                // Ensure sum of both does not exceed total
-                if (typedChild + newParentVal > totalLimit) {
-                    alert(`Child + Parent cannot exceed total of ${totalLimit}`);
-                    childField.value = originalChildValue; // revert
-                    return;
-                }
-            
-                childField.value = typedChild;
-                parentField.value = newParentVal;
-            
-                originalChildValue = typedChild;
-            });
+
+            const value = childField.value;
+
+            // Allow only valid decimal typing
+            if (!/^\d*\.?\d*$/.test(value)) {
+                childField.value = value.slice(0, -1);
+                return;
+            }
+        
+            // If user just typed "." or empty, don't calculate yet
+            if (value === "" || value === ".") {
+                return;
+            }
+        
+            let typedChild = parseFloat(value);
+            if (isNaN(typedChild)) typedChild = 0;
+        
+            typedChild = clamp(typedChild, 0, totalLimit);
+        
+            let parentVal = parseFloat(parentField.value);
+            if (isNaN(parentVal)) parentVal = 0;
+        
+            let diff = originalChildValue - typedChild;
+            let newParentVal = clamp(parentVal + diff, 0, totalLimit);
+        
+            if (typedChild + newParentVal > totalLimit) {
+                alert(`Child + Parent cannot exceed total of ${totalLimit}`);
+                childField.value = originalChildValue;
+                return;
+            }
+        
+            parentField.value = newParentVal;
+            originalChildValue = typedChild;
+        });
             
             // 4️⃣ Parent input if editable
             parentField.addEventListener("input", function () {
-                let typedParent = parseFloat(parentField.value);
-                if (isNaN(typedParent)) typedParent = 0; // ✅ default to 0
-            
-                typedParent = clamp(typedParent, 0, totalLimit);
-            
-                let childVal = parseFloat(childField.value);
-                if (isNaN(childVal)) childVal = 0; // ✅ default to 0
-            
-                // Ensure sum of both does not exceed total
-                if (typedParent + childVal > totalLimit) {
-                    alert(`Parent + Child cannot exceed total of ${totalLimit}`);
-                    parentField.value = clamp(totalLimit - childVal, 0, totalLimit);
-                    return;
-                }
-            
-                parentField.value = typedParent;
-            });
+            const value = parentField.value;
+
+            // ✅ Allow only valid decimal typing
+            if (!isValidDecimal(value)) {
+                parentField.value = value.slice(0, -1);
+                return;
+            }
+        
+            // If user just typed "." or empty, don't calculate yet
+            if (value === "" || value === ".") return;
+        
+            let typedParent = parseFloat(value) || 0;
+            typedParent = clamp(typedParent, 0, totalLimit);
+        
+            let childVal = parseFloat(childField.value) || 0;
+        
+            // Ensure sum of both does not exceed total
+            if (typedParent + childVal > totalLimit) {
+                alert(`Parent + Child cannot exceed total of ${totalLimit}`);
+                parentField.value = clamp(totalLimit - childVal, 0, totalLimit);
+                return;
+            }
+        
+            parentField.value = typedParent;
+        });
             
             // ===============================
             // CASINO SHARE TRANSFER LOGIC (FIXED)
@@ -341,27 +358,35 @@ function handleEditClick(username) {
             
                 // CHILD → PARENT (difference logic like match)
                 childCasinoField.addEventListener("input", function () {
-                
-                    let typedChild = parseFloat(childCasinoField.value) || 0;
-                
-                    typedChild = clamp(typedChild, 0, totalLimitCasino);
-                
-                    let diff = originalChildCasinoValue - typedChild;
-                
-                    let parentVal = parseFloat(parentCasinoField.value) || 0;
-                    let newParentVal = clamp(parentVal + diff, 0, totalLimitCasino);
-                
-                    if (typedChild + newParentVal > totalLimitCasino) {
-                        alert(`Casino Child + Parent cannot exceed total of ${totalLimitCasino}`);
-                        childCasinoField.value = originalChildCasinoValue;
-                        return;
-                    }
-                
-                    childCasinoField.value = typedChild;
-                    parentCasinoField.value = newParentVal;
-                
-                    originalChildCasinoValue = typedChild;
-                });
+                const value = childCasinoField.value;
+                            
+                // ✅ Allow only valid decimal typing
+                if (!isValidDecimal(value)) {
+                    childCasinoField.value = value.slice(0, -1);
+                    return;
+                }
+            
+                // If user just typed "." or empty, don't calculate yet
+                if (value === "" || value === ".") return;
+            
+                let typedChild = parseFloat(value) || 0;
+                typedChild = clamp(typedChild, 0, totalLimitCasino);
+            
+                let parentVal = parseFloat(parentCasinoField.value) || 0;
+                let diff = originalChildCasinoValue - typedChild;
+                let newParentVal = clamp(parentVal + diff, 0, totalLimitCasino);
+            
+                if (typedChild + newParentVal > totalLimitCasino) {
+                    alert(`Casino Child + Parent cannot exceed total of ${totalLimitCasino}`);
+                    childCasinoField.value = originalChildCasinoValue;
+                    return;
+                }
+            
+                childCasinoField.value = typedChild;
+                parentCasinoField.value = newParentVal;
+            
+                originalChildCasinoValue = typedChild;
+            });
             
                 // PARENT EDIT (no transfer to child, only restrict total)
                 parentCasinoField.addEventListener("input", function () {
