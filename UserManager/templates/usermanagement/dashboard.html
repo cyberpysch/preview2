@@ -390,21 +390,32 @@ function handleEditClick(username) {
             
                 // PARENT EDIT (no transfer to child, only restrict total)
                 parentCasinoField.addEventListener("input", function () {
-                
-                    let typedParent = parseFloat(parentCasinoField.value) || 0;
-                
-                    typedParent = clamp(typedParent, 0, totalLimitCasino);
-                
-                    let childVal = parseFloat(childCasinoField.value) || 0;
-                
-                    if (typedParent + childVal > totalLimitCasino) {
-                        parentCasinoField.value = clamp(totalLimitCasino - childVal, 0, totalLimitCasino);
-                        return;
-                    }
-                
-                    parentCasinoField.value = typedParent;
-                });
-            }
+                const value = parentCasinoField.value;
+                        
+                // Allow only valid decimal typing
+                if (!isValidDecimal(value)) {
+                    parentCasinoField.value = value.slice(0, -1);
+                    return;
+                }
+            
+                // Ignore empty or just "."
+                if (value === "" || value === ".") return;
+            
+                let typedParent = parseFloat(value) || 0;
+                typedParent = clamp(typedParent, 0, totalLimitCasino);
+            
+                let childVal = parseFloat(childCasinoField.value) || 0;
+            
+                // Ensure sum does not exceed total
+                if (typedParent + childVal > totalLimitCasino) {
+                    alert(`Casino Parent + Child cannot exceed total of ${totalLimitCasino}`);
+                    parentCasinoField.value = clamp(totalLimitCasino - childVal, 0, totalLimitCasino);
+                    return;
+                }
+            
+                parentCasinoField.value = typedParent;
+            });
+        }
             // 7️⃣ Form submission
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
