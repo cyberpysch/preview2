@@ -204,6 +204,24 @@ def api_edit_user(request, username):
             new_parent_match_share = Decimal(data.get("parent_match_share", "0")) if parent and parent.share_type == "CHANGE" else (Decimal(data.get("parent_match_share", "0")) if parent else Decimal("0"))
             new_child_casino_share = Decimal(data.get("casino_share"))
             new_parent_casino_share = Decimal(data.get("parent_casino_share", "0"))
+            new_commission_type = data.get("match_comm_type")
+            
+            if new_commission_type == "bet_by_bet":
+                new_child_casino_commission = Decimal(data.get("casino_commission"))
+                new_child_match_commission = Decimal(data.get("match_commission"))
+                new_child_session_commission = Decimal(data.get("session_commission"))
+            else:
+                new_child_casino_commission = 0
+                new_child_match_commission = 0
+                new_child_session_commission = 0
+            if new_child_match_commission > parent.match_commission or new_child_casino_commission > parent.casino_commission or new_child_session_commission > parent.session_commission:
+                return JsonResponse(
+                    {"status":"error","message": f"{account.role} commission cannot more than {parent.role}"}
+                )
+            if new_child_match_commission < 0 or new_child_casino_commission <0 or new_child_session_commission <0:
+                return JsonResponse(
+                    {"status":"error","message": f"{account.role} commission cannot less than 0"}
+                )
         except InvalidOperation:
             return JsonResponse({"status": "error", "message": "Invalid decimal input"}, status=400)
         # Validate sum constraint
@@ -258,9 +276,9 @@ def api_edit_user(request, username):
             "username": account.user.username,
             "match_share": float(new_child_match_share),
             "casino_share": float(new_child_casino_share),
-            "match_commission": float(account.match_commission),
-            "session_commission": float(account.session_commission),
-            "casino_commission": float(account.casino_commission),
+            "match_commission": float(new_child_match_commission),
+            "session_commission": float(new_child_session_commission),
+            "casino_commission": float(new_child_casino_commission),
         })
         # Save partnership deed on child account
         account.partnership_deed = partnership_deed
