@@ -1,3 +1,5 @@
+from dataclasses import field
+
 from django.shortcuts import render ,redirect
 from django.http import HttpResponse
 from django.contrib.auth import authenticate, login
@@ -249,6 +251,24 @@ def api_edit_user(request, username):
         # Build partnership deed for match_share
         partnership_deed = []
         # Grandparent portion (leftover)
+        #if account.parent.share_type == "FIXED":
+        sharing_fields = ["match_share", "casino_share"]
+        # Loop over the fields you want to update
+        for field in sharing_fields:
+            new_value = new_child_match_share if field == "match_share" else new_child_casino_share
+            # Check all immediate children
+            for child in account.children.all():
+                child_value = getattr(child, field, 0)  # Get child's current value
+                if child_value > new_value:
+                    return JsonResponse({
+                        "status": "error",
+                        "message": f"Cannot set {field} to {new_value}. "
+                                   f"Child '{child.user.username}' has {child_value}."
+                    }, status=400)
+        # If validation passes, update the account
+        account.match_share = new_child_match_share
+        account.casino_share = new_child_casino_share
+        account.save(update_fields=["match_share", "casino_share"])
         if grandparent:
             partnership_deed.append({
                 "role": grandparent.role,
